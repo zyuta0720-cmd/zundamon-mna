@@ -1,0 +1,420 @@
+{
+ "engine": "VOICEVOX 0.24.1",
+ "lines": {
+  "0-0": {
+   "f": "0-0.mp3",
+   "t": "めたん、この回路計算のプログラム、パイ・エムエヌエー・プロ って中で何をしているのだ?",
+   "sig": "[1,{\"speedScale\":1.1,\"pitchScale\":0.02,\"intonationScale\":1.32,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "0-1": {
+   "f": "0-1.mp3",
+   "t": "回路図を「連立方程式」に翻訳して、コンピュータに解かせているの。その翻訳のルールが エムエヌエー、修正節点解析よ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "0-2": {
+   "f": "0-2.mp3",
+   "t": "流れは4段階。ネットリストを読む、行列 A と右辺 Z にスタンプする、ナムパイのソルブ で解く、ノードごとの電圧を返す。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "0-3": {
+   "f": "0-3.mp3",
+   "t": "行列、数学っぽくて身構えるのだ、",
+   "sig": "[75,{\"speedScale\":1.2320000000000002,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "0-4": {
+   "f": "0-4.mp3",
+   "t": "大丈夫。やることは「決まったマスに数字を足すだけ」。今日は電圧源1個、電流源1個、抵抗3本の回路で、1マスずつ見ていきましょう。",
+   "sig": "[0,{\"speedScale\":1.05,\"pitchScale\":0.02,\"intonationScale\":1.32,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "0-5": {
+   "f": "0-5.mp3",
+   "t": "計算はこのページの中で実際に動いているわ。下の入力欄で値を変えると、行列も答えも全部変わるわよ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "1-0": {
+   "f": "1-0.mp3",
+   "t": "今日の回路はこれ。左に 10ボルト の電圧源 ブイイン、上に抵抗 アールワン と アールスリー、真ん中に アールツー、右に電流源 アイワン。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "1-1": {
+   "f": "1-1.mp3",
+   "t": "電線でつながっている点を「ノード」と呼んで、番号をつけるの。下の線全体が0番、つまり グランド。電圧の基準ね。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "1-2": {
+   "f": "1-2.mp3",
+   "t": "残りはノード1、2、3の3つ。この3つの電圧を求めるのが今日のゴールよ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "1-3": {
+   "f": "1-3.mp3",
+   "t": "回路図のままだと、プログラムは読めないのだな?",
+   "sig": "[3,{\"speedScale\":1.1,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "1-4": {
+   "f": "1-4.mp3",
+   "t": "そう。だから1部品1行の「ネットリスト」に書くの。パイ・エムエヌエー・プロ では、種別、名前、プラス側ノード、マイナス側ノード、値の順よ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "1-5": {
+   "f": "1-5.mp3",
+   "t": "たとえば アールワン の行は「抵抗 アールワン がノード1と2の間にあって 1キロオーム」という意味。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "1-6": {
+   "f": "1-6.mp3",
+   "t": "アイワン の行は「電流源 アイワン が、ノード0から3の向きに 2ミリアンペア を押し出す」という意味よ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "1-7": {
+   "f": "1-7.mp3",
+   "t": "パース・ネットリスト・テキスト は、これを空白で区切って、コメントを捨てて、行ごとのリストにするだけ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "2-0": {
+   "f": "2-0.mp3",
+   "t": "基本はキルヒホッフの電流則、ケーシーエル。「ノードから出ていく電流の合計は、外から押し込まれた電流と等しい」。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "2-1": {
+   "f": "2-1.mp3",
+   "t": "抵抗を流れる電流は、両端の電圧の差を抵抗で割れば出せる。オームの法則ね。だからノード2の式は、こう書けるわ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "2-2": {
+   "f": "2-2.mp3",
+   "t": "ノード3は アールスリー と電流源だけ。アールスリー から出ていく電流が、アイワン が押し込む電流と等しい。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "2-3": {
+   "f": "2-3.mp3",
+   "t": "じゃあノード1は、あれ?電圧源に流れる電流がわからないのだ!",
+   "sig": "[3,{\"speedScale\":1.1,\"pitchScale\":0.06,\"intonationScale\":1.6500000000000001,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "2-4": {
+   "f": "2-4.mp3",
+   "t": "そこが普通のノード解析の壁。電圧源は「電圧は決まっているけど、流れる電流は回路しだい」。だから式に正体不明の電流が残ってしまうの。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "2-5": {
+   "f": "2-5.mp3",
+   "t": "ずるいのだ、電圧源!",
+   "sig": "[7,{\"speedScale\":1.1550000000000002,\"pitchScale\":0,\"intonationScale\":1.4300000000000002,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "2-6": {
+   "f": "2-6.mp3",
+   "t": "ふふ。この壁を壊すのが、次の エムエヌエー の発想よ。",
+   "sig": "[0,{\"speedScale\":1.05,\"pitchScale\":0.02,\"intonationScale\":1.32,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "3-0": {
+   "f": "3-0.mp3",
+   "t": "エムエヌエー の発想はシンプル。わからない電流があるなら、それも最初から未知数に入れてしまえばいい。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "3-1": {
+   "f": "3-1.mp3",
+   "t": "未知数はノード電圧3つと、電圧源 ブイイン の電流1つで、全部で4つ。パイ では ナム・エヌ と ナム・ブイ を足して ディム、行列の大きさを決めているわ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "3-2": {
+   "f": "3-2.mp3",
+   "t": "未知数が4つなら、式も4本いるのだな。",
+   "sig": "[3,{\"speedScale\":1.1,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "3-3": {
+   "f": "3-3.mp3",
+   "t": "その通り。ノード1、2、3の ケーシーエル で3本、それと「ブイイン の両端の電圧は 10ボルト」という式で1本。合わせて4本よ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "3-4": {
+   "f": "3-4.mp3",
+   "t": "左上の3かける3がコンダクタンスの G ブロック。右と下の帯 B と C が、電圧源のつながりを表すの。右下の D は、今日の回路では0のままね。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "3-5": {
+   "f": "3-5.mp3",
+   "t": "ここからは、この空っぽの4かける4のマスに、部品を1個ずつスタンプしていくわ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "4-0": {
+   "f": "4-0.mp3",
+   "t": "最初は抵抗 アールワン。抵抗はコンダクタンス G、つまり 1/R の形で使うの。アールワン = 1キロオーム なら ジーワン = 1ミリジーメンス。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "4-1": {
+   "f": "4-1.mp3",
+   "t": "アールワン はノード1と2の間にあるから、行1列1と行2列2に プラス・ジーワン、行1列2と行2列1に マイナス・ジーワン。4か所にセットでスタンプよ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "4-2": {
+   "f": "4-2.mp3",
+   "t": "なんでその4か所なのだ?",
+   "sig": "[3,{\"speedScale\":1.1,\"pitchScale\":0.06,\"intonationScale\":1.6500000000000001,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "4-3": {
+   "f": "4-3.mp3",
+   "t": "ノード1の ケーシーエル で考えて。アールワン を通ってノード1から出ていく電流は ジーワン かける、ブイワン ひく ブイツー。ブイワン の係数が プラス・ジーワン、ブイツー の係数が マイナス・ジーワン でしょう?",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "4-4": {
+   "f": "4-4.mp3",
+   "t": "ノード2から見ると向きが逆だから、ブイツー に プラス・ジーワン、ブイワン に マイナス・ジーワン。これで4マスがそろうの。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "4-5": {
+   "f": "4-5.mp3",
+   "t": "回路を考えなくても、つながっている番号さえわかれば押せるのだな!",
+   "sig": "[1,{\"speedScale\":1.1,\"pitchScale\":0.02,\"intonationScale\":1.32,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "4-6": {
+   "f": "4-6.mp3",
+   "t": "そう。パイ でも エーのエヌポス・エヌポスにジーを足す のように、たった4行で書いてあるわ。",
+   "sig": "[0,{\"speedScale\":1.05,\"pitchScale\":0.02,\"intonationScale\":1.32,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "5-0": {
+   "f": "5-0.mp3",
+   "t": "次は アールツー。こっちはノード2と グランド の間にあるわ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "5-1": {
+   "f": "5-1.mp3",
+   "t": "グランド は電圧0と決めた基準だから、未知数にも行列にも入れない。パイ では グランド の番号を マイナス1 にして、その行と列はスキップしているの。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "5-2": {
+   "f": "5-2.mp3",
+   "t": "だから アールツー は、行2列2に プラス・ジーツー を1つ足すだけ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "5-3": {
+   "f": "5-3.mp3",
+   "t": "アールスリー はノード2と3の間だから、アールワン と同じく4か所。行2列2は ジーワン と ジーツー と ジースリー が積み重なって、合計 3.5ミリジーメンス になるわ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "5-4": {
+   "f": "5-4.mp3",
+   "t": "スタンプが重なると、どんどん足されていくのだな!",
+   "sig": "[3,{\"speedScale\":1.1,\"pitchScale\":0.06,\"intonationScale\":1.6500000000000001,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "5-5": {
+   "f": "5-5.mp3",
+   "t": "その通り。対角のマスは「そのノードにつながる抵抗のコンダクタンスの合計」、それ以外は「2つのノードの間の抵抗のマイナス」。左上と右下で対称になっているのもわかるでしょう?",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "6-0": {
+   "f": "6-0.mp3",
+   "t": "次は電流源 アイワン。電流源は電流の大きさが決まっているから、未知数を増やさないの。スタンプ先は右辺のベクトル Z よ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "6-1": {
+   "f": "6-1.mp3",
+   "t": "ネットリストではプラス側が0、マイナス側が3。電流源の中を0から3へ流れる向きね。だから外の回路から見ると、ノード3に 2ミリアンペア が押し込まれる。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "6-2": {
+   "f": "6-2.mp3",
+   "t": "パイ では ゼットのエヌネグに値を足す。ノード3の行に プラス・アイワン を足すわ。プラス側は グランド だからスキップ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "6-3": {
+   "f": "6-3.mp3",
+   "t": "押し込まれる電流は右辺、出ていく電流は左辺なのだな。",
+   "sig": "[3,{\"speedScale\":1.1,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "6-4": {
+   "f": "6-4.mp3",
+   "t": "そう。ケーシーエル の「出ていく合計 = 押し込まれた分」を、そのまま行列にしたのが エー・エックス・イコール・ゼット なの。",
+   "sig": "[0,{\"speedScale\":1.05,\"pitchScale\":0.02,\"intonationScale\":1.32,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "7-0": {
+   "f": "7-0.mp3",
+   "t": "最後は電圧源 ブイイン。ここが エムエヌエー の一番おいしいところよ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "7-1": {
+   "f": "7-1.mp3",
+   "t": "ブイイン のために増やした4番目の列は、電流 アイ・ブイイン の係数。ノード1の ケーシーエル に プラス1。マイナス側は グランド だから何もなし。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "7-2": {
+   "f": "7-2.mp3",
+   "t": "4番目の行は ブイイン 自身の式。ブイワン ひく ブイゼロ は 10ボルト だから、行4列1に プラス1、右辺に 10 を置くの。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "7-3": {
+   "f": "7-3.mp3",
+   "t": "プラス1 と マイナス1 のマスと、右辺の電圧だけで済むのだ!",
+   "sig": "[3,{\"speedScale\":1.1,\"pitchScale\":0.06,\"intonationScale\":1.6500000000000001,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "7-4": {
+   "f": "7-4.mp3",
+   "t": "B と C が同じ形の転置になるから、行列は対称のまま。パイ では エーのエヌポス・ブイインデックスに1を足す と エーのブイインデックス・エヌポスに1を足す を同じ行で書いているわね。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "7-5": {
+   "f": "7-5.mp3",
+   "t": "アイ・ブイイン の向きは「プラス端子から電源の中へ流れ込む向き」が正。これは スパイス と同じ決まりよ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "8-0": {
+   "f": "8-0.mp3",
+   "t": "全部のスタンプが終わったわ。これが回路全体を表す連立方程式、エー・エックス・イコール・ゼット。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "8-1": {
+   "f": "8-1.mp3",
+   "t": "1行目はノード1の ケーシーエル。さっき壁にぶつかった式に、アイ・ブイイン がちゃんと未知数として入っているわね。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "8-2": {
+   "f": "8-2.mp3",
+   "t": "2行目と3行目はノード2と3の ケーシーエル。4行目は ブイワン = 10ボルト。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "8-3": {
+   "f": "8-3.mp3",
+   "t": "行列の中の0は、どういう意味なのだ?",
+   "sig": "[3,{\"speedScale\":1.1,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "8-4": {
+   "f": "8-4.mp3",
+   "t": "その2つのノードの間に、直接つながっている部品がないという意味。大きな回路ほど0だらけになるから、本格的なシミュレータは0を省いて計算を速くしているの。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "8-5": {
+   "f": "8-5.mp3",
+   "t": "回路図が、ただの数字の表になったのだ!",
+   "sig": "[1,{\"speedScale\":1.1,\"pitchScale\":0.02,\"intonationScale\":1.32,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "9-0": {
+   "f": "9-0.mp3",
+   "t": "あとは解くだけ。パイ では ナムパイのソルブ の1行。中身は高校で習う連立方程式の消去法を、機械的にくり返しているの。ウェブ 版ではそれを ジャバスクリプト で自前で書いているわ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "9-1": {
+   "f": "9-1.mp3",
+   "t": "答えは ブイワン が 10ボルト、ブイツー が 8ボルト、ブイスリー が 9ボルト。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "9-2": {
+   "f": "9-2.mp3",
+   "t": "アイ・ブイイン は マイナス2ミリアンペア。マイナスは決めた向きと逆、つまり ブイイン のプラス端子から 2ミリアンペア が回路へ出ていくという意味ね。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "9-3": {
+   "f": "9-3.mp3",
+   "t": "本当に合ってるのか、確かめたいのだ。",
+   "sig": "[3,{\"speedScale\":1.1,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "9-4": {
+   "f": "9-4.mp3",
+   "t": "下の表で、各ノードから出ていく電流を足してみて。どのノードも合計が0になっているはずよ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "9-5": {
+   "f": "9-5.mp3",
+   "t": "どのノードも、出入りする電流がぴったり釣り合っているのだ!",
+   "sig": "[1,{\"speedScale\":1.1,\"pitchScale\":0.02,\"intonationScale\":1.32,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "9-6": {
+   "f": "9-6.mp3",
+   "t": "パイ の最後は、解いた x をノード名の辞書に戻して返すだけ。グランド は 0ボルト として付け足しているわ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "10-0": {
+   "f": "10-0.mp3",
+   "t": "ここからはおまけの実験。わざと回路を壊して、エムエヌエー がどう反応するか見てみましょう。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "10-1": {
+   "f": "10-1.mp3",
+   "t": "アールスリー を外してやるのだ!ボタンを押してみるのだ!",
+   "sig": "[7,{\"speedScale\":1.1550000000000002,\"pitchScale\":0,\"intonationScale\":1.4300000000000002,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "10-2": {
+   "f": "10-2.mp3",
+   "t": "するとノード3には電流源しかつながっていない。行3が全部0になって、行列式が0。逆行列が作れないから解けないの。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "10-3": {
+   "f": "10-3.mp3",
+   "t": "物理的にも、押し込まれた電流の行き場がないわよね。数学がそれを「解なし」として教えてくれているの。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "10-4": {
+   "f": "10-4.mp3",
+   "t": "グランド を外したり、電圧源を並べたりしても壊れるのだな?",
+   "sig": "[3,{\"speedScale\":1.1,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "10-5": {
+   "f": "10-5.mp3",
+   "t": "グランド がないと電圧の基準がなくて、答えが1つに決まらない。違う電圧の電圧源を並列にすると、ブイワン が2つの値を同時にとる矛盾になる。どちらも行列式0よ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "10-6": {
+   "f": "10-6.mp3",
+   "t": "実際の パイ・エムエヌエー・プロ は、解く前の検証でこういうミスを見つけて、日本語のエラーで教えてくれるわ。それでもすり抜けたら、ソルブ の例外を捕まえて「行列が特異で解けません」と表示するの。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "11-0": {
+   "f": "11-0.mp3",
+   "t": "実際の抵抗には誤差があるの。たとえば ±5パーセント なら、1キロオーム の アールワン は、その 5パーセント 上下のどこかの値になる。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "11-1": {
+   "f": "11-1.mp3",
+   "t": "パイ・エムエヌエー・プロ のワーストケース解析は、部品の値を変えて ソルブ を何度も呼んで、電圧がいちばん高くなる組み合わせと低くなる組み合わせを探すの。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "11-2": {
+   "f": "11-2.mp3",
+   "t": "抵抗3本なら、それぞれ最小か最大かで、2の3乗の8通り。この表は8通り全部を エムエヌエー で解いた結果よ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "11-3": {
+   "f": "11-3.mp3",
+   "t": "ノード3の電圧、8.743ボルト から 9.243ボルト まで動くのだ!",
+   "sig": "[3,{\"speedScale\":1.1,\"pitchScale\":0.06,\"intonationScale\":1.6500000000000001,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "11-4": {
+   "f": "11-4.mp3",
+   "t": "部品が増えると組み合わせは爆発的に増えるから、パイ ではまず1個ずつ動かして「上げると電圧が上がるか下がるか」を調べて、向きを決めているの。それが右のコードね。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "11-5": {
+   "f": "11-5.mp3",
+   "t": "行列を作る仕組みが同じだから、何百回解いても一瞬なのよ。",
+   "sig": "[0,{\"speedScale\":1.05,\"pitchScale\":0.02,\"intonationScale\":1.32,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "12-0": {
+   "f": "12-0.mp3",
+   "t": "最後に答え合わせ。この回路なら、手計算でも公式が作れるわ。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "12-1": {
+   "f": "12-1.mp3",
+   "t": "ブイツー は、アールワン から入る電流と アイワン を足して、アールワン と アールツー の並列のコンダクタンスで割った値。ブイスリー は ブイツー に、アイワン かける アールスリー を足した値ね。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "12-2": {
+   "f": "12-2.mp3",
+   "t": "全部に ✓ がついたのだ!エムエヌエー と手計算がぴったり同じなのだ!",
+   "sig": "[1,{\"speedScale\":1.1,\"pitchScale\":0.02,\"intonationScale\":1.32,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "12-3": {
+   "f": "12-3.mp3",
+   "t": "手計算は回路ごとに工夫がいるけど、エムエヌエー なら部品が何千個あっても同じルールで機械的に式が作れる。だからコンピュータの回路計算の標準になっているの。",
+   "sig": "[2,{\"speedScale\":1.05,\"pitchScale\":0,\"intonationScale\":1.1,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "12-4": {
+   "f": "12-4.mp3",
+   "t": "部品ごとに決まったマスにスタンプして、解くだけ!回路計算の魔法の正体がわかったのだ!",
+   "sig": "[1,{\"speedScale\":1.1,\"pitchScale\":0.02,\"intonationScale\":1.32,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  },
+  "12-5": {
+   "f": "12-5.mp3",
+   "t": "よくできました。下の入力欄で値を変えて、行列や答えがどう変わるか試してみてね。",
+   "sig": "[0,{\"speedScale\":1.05,\"pitchScale\":0.02,\"intonationScale\":1.32,\"prePhonemeLength\":0.05,\"postPhonemeLength\":0.12}]"
+  }
+ }
+}
