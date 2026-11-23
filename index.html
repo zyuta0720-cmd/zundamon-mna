@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MNA 回路解析ラボ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&family=Zen+Kaku+Gothic+New:wght@400;700&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<style>
+/* LAYOUT: 上に「解説ステージ(常に暗色)」+掛け合い欄、下に回路の値の入力欄と solver_core.py の該当コード、最後に用語集 */
+:root{
+  --bg:#eef1f4;--fg:#15202b;--card:#ffffff;--line:#d5dbe2;--sub:#5b6775;--accent:#0a64b0;--accent-ink:#ffffff;
+  --tb:#161b21;--tb2:#1e252d;--tline:#303a45;--tink:#e6edf3;--tsub:#8d9aa7;--yel:#ffd54a;
+  --bubble:#f7f9fb;--bubble-ink:#15202b;
+  /* 部品ごとの色(回路図・ネットリスト・行列のマスで共通) */
+  --c-v:#ff6b5e;--c-r1:#ff9800;--c-r2:#29b6f6;--c-r3:#cddc39;--c-i:#c08cff;--c-x:#5cc463;
+  --zun:#5fbf3a;--met:#e86aa0;--ok:#3fb950;--ng:#ff5d5d;
+  --f-disp:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN",system-ui,sans-serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1318;--fg:#e3e9ef;--card:#161c23;--line:#2a333d;--sub:#93a0ad;--accent:#4aa3ff;--accent-ink:#06121f;--tb:#12171c;--tb2:#1a2027;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1318;--fg:#e3e9ef;--card:#161c23;--line:#2a333d;--sub:#93a0ad;--accent:#4aa3ff;--accent-ink:#06121f;--tb:#12171c;--tb2:#1a2027;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.65 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-block:22px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font:800 clamp(24px,3.6vw,32px)/1.15 var(--f-disp);margin:0;text-wrap:balance}
+.lead{margin:6px 0 16px;color:var(--sub);max-width:72ch}
+.lead code{font-family:var(--f-mono);font-size:.92em}
+
+/* 章ナビ */
+.nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;scrollbar-width:thin}
+.nav button{flex:none;min-height:34px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:700 13px/1 var(--f-body);cursor:pointer;white-space:nowrap}
+.nav button .n{font-family:var(--f-mono);color:var(--sub);margin-right:6px;font-weight:400}
+.nav button[aria-current="step"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.nav button[aria-current="step"] .n{color:inherit;opacity:.75}
+
+/* ステージ */
+.stage{background:var(--tb);color:var(--tink);border-radius:16px;overflow:hidden;box-shadow:0 12px 32px #0000002e}
+.bhead{display:flex;align-items:baseline;gap:12px;padding:14px 18px;border-bottom:1px solid var(--tline);flex-wrap:wrap}
+.bhead h2{margin:0;font:800 19px/1.3 var(--f-disp);text-wrap:balance}
+.bhead .num{font:600 12px/1 var(--f-mono);color:var(--tsub);letter-spacing:.06em}
+.bhead .py{margin-left:auto;font:400 12px/1 var(--f-mono);color:var(--tsub)}
+.view{padding:18px;min-height:340px;overflow-x:auto}
+.view [data-k]{transition:opacity .25s,filter .25s,box-shadow .25s}
+.view.focus [data-k]:not(.lit):not(.litp){opacity:.25;filter:saturate(.3)}
+.view.focus .lit [data-k]{opacity:1;filter:none}
+.view .lit{box-shadow:0 0 0 2px var(--yel),0 0 18px #ffd54a40;border-radius:10px}
+.view svg .lit{box-shadow:none;filter:drop-shadow(0 0 5px #ffd54acc)}
+.warn{background:#4a1f1f;color:#ffd2d2;border:1px solid #7a3434;border-radius:10px;padding:10px 14px;margin-bottom:12px}
+.view h3{margin:0 0 6px;font:800 14px/1.3 var(--f-disp);color:var(--tink)}
+.view p{margin:0 0 8px}
+.note{font-size:13px;color:var(--tsub);margin:12px 0 0}
+.note code,.view p code{font-family:var(--f-mono);color:var(--tink);background:#ffffff10;padding:0 5px;border-radius:4px}
+.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:16px;align-items:start}
+.col{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;background:#ffffff06;border:1px dashed var(--tline);min-width:0}
+.bx{background:var(--tb2);border:1px solid var(--tline);border-radius:10px;padding:10px 12px}
+.bx .lb{display:block;font:700 12px/1.4 var(--f-body);color:var(--tsub);margin-bottom:4px}
+
+/* 部品の色 */
+.t-Vin,.t-Vx{color:var(--c-v)}.t-R1{color:var(--c-r1)}.t-R2{color:var(--c-r2)}.t-R3{color:var(--c-r3)}.t-I1{color:var(--c-i)}.t-x{color:var(--c-x)}
+.dotc{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:0}
+
+/* 全体の流れ */
+.flow4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.fnode{background:var(--tb2);border:1px solid var(--tline);border-radius:14px;padding:12px 14px;position:relative}
+.fnode b{display:block;font:800 15px/1.3 var(--f-disp)}
+.fnode small{display:block;color:var(--tsub);font-size:12.5px;margin-top:4px;line-height:1.5}
+.fnode code{font:600 12px var(--f-mono);color:var(--yel)}
+.fnode:not(:last-child)::after{content:'→';position:absolute;right:-12px;top:50%;translate:50% -50%;color:var(--yel);font:800 16px/1 var(--f-mono)}
+.axz{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.axz>div{background:var(--tb2);border:1px solid var(--tline);border-radius:10px;padding:10px 12px;font-size:13.5px}
+.axz b{display:block;font:800 22px/1.2 var(--f-mono);margin-bottom:2px}
+.axz span{color:var(--tsub)}
+
+/* 回路図 */
+.ckt svg{width:100%;max-width:640px;height:auto;display:block;margin:0 auto}
+.ckt .w{stroke:#8d9aa7;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ckt .cp{fill:none;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.ckt .src{fill:var(--tb);stroke-width:2.8}
+.k-Vin .cp,.k-Vin .src{stroke:var(--c-v)}.k-R1 .cp{stroke:var(--c-r1)}.k-R2 .cp{stroke:var(--c-r2)}.k-R3 .cp{stroke:var(--c-r3)}.k-I1 .cp,.k-I1 .src{stroke:var(--c-i)}
+.k-I1 .ah{fill:var(--c-i)}
+.ckt text{font:600 13px var(--f-mono);fill:var(--tink)}
+.ckt .lbl{font:800 14px var(--f-disp)}
+.ckt .val{fill:var(--tsub);font-size:12.5px}
+.ckt .sv{fill:var(--yel);font-weight:700;font-size:13px}
+.ckt .si{fill:#9fe3a8;font-size:12px}
+.ckt .nd{fill:var(--tink)}
+.ckt .nlab{font:800 13px var(--f-mono);fill:#0d1117}
+.ckt .nbg{fill:var(--tink)}
+.ckt .gnd{stroke:#8d9aa7;stroke-width:2.2}
+.ckt .cut{opacity:.25}
+.ckt .xm{stroke:var(--ng);stroke-width:3.5;stroke-linecap:round}
+
+/* ネットリスト */
+.net{background:#0d1117;border:1px solid var(--tline);border-radius:10px;padding:10px 0;font:500 14px/1.9 var(--f-mono);overflow-x:auto}
+.net .nl{padding:0 14px;white-space:pre}
+.net .cm{color:#7f9c7a}
+.net .hd{color:var(--tsub);font-size:12px}
+.fmt{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.fmt span{font:700 12px/1 var(--f-mono);padding:6px 8px;border-radius:6px;background:#ffffff12;border:1px solid var(--tline)}
+
+/* 式 */
+.eq{font:600 15px/1.7 var(--f-mono);background:var(--tb2);border:1px solid var(--tline);border-radius:10px;padding:10px 14px;margin-bottom:8px;overflow-x:auto;white-space:nowrap}
+.eq .lb{display:block;font:700 12px/1.4 var(--f-body);color:var(--tsub);white-space:normal}
+.eq .q{color:var(--ng);background:#ff5d5d22;border-radius:4px;padding:0 4px}
+.eq .ok{color:var(--c-x)}
+.eqs .eq{font-size:14px}
+
+/* 行列 */
+.mx{display:flex;align-items:flex-start;gap:6px;font-family:var(--f-mono);width:max-content;margin:0 auto}
+.mx table{border-collapse:separate;border-spacing:4px}
+.mx thead th{height:24px;font:700 13px/1 var(--f-mono);color:var(--tsub);text-align:center;padding:0 4px}
+.mx tbody td,.mx tbody th{height:58px}
+.mx .rl{font:700 12px/1.3 var(--f-body);color:var(--tsub);text-align:right;padding-right:4px;white-space:nowrap}
+.mx td.cell{min-width:76px;background:var(--tb2);border:1px solid var(--tline);border-radius:8px;text-align:center;vertical-align:middle;padding:3px 7px}
+.mx td.blkB,.mx td.blkC{background:#272231}.mx td.blkD{background:#232323}
+.mx td.zr{background:#3d1b1b;border-color:#7a3434}
+.mx td.xc{min-width:64px;background:#17261b;border-color:#2c4a33}
+.mx .sym{display:block;font:600 12.5px/1.35 var(--f-mono);white-space:nowrap}
+.mx .num{display:block;font:700 15px/1.35 var(--f-mono);color:var(--tink)}
+.mx .zero{color:#4f5b67;font-weight:600}
+.mx .xl{display:block;font:700 14px/1.3 var(--f-mono);color:var(--c-x)}
+.mx .xv{display:block;font:700 13px/1.3 var(--f-mono);color:var(--yel)}
+.br{position:relative;padding:0 9px}
+.br::before,.br::after{content:'';position:absolute;top:30px;bottom:2px;width:7px;border:2px solid #8d9aa7}
+.br::before{left:0;border-right:none}.br::after{right:0;border-left:none}
+.mx .op{align-self:center;padding-top:28px;font:800 22px/1 var(--f-mono);color:var(--yel)}
+.unit{font-size:12.5px;color:var(--tsub);text-align:center;margin:8px 0 0}
+.mxwrap{overflow-x:auto;padding-bottom:4px}
+.rule{display:grid;grid-template-columns:auto auto auto;gap:4px;width:max-content;font:700 14px/1 var(--f-mono);margin:6px 0}
+.rule div{padding:10px 12px;border-radius:8px;text-align:center;background:var(--tb2);border:1px solid var(--tline)}
+.rule .h{background:none;border:none;color:var(--tsub);font-size:12px;padding:6px}
+.rule .p{color:var(--c-x)}.rule .m{color:var(--ng)}
+
+/* 表 */
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--tline);vertical-align:top}
+table.t th{font:700 12px/1.4 var(--f-body);color:var(--tsub);letter-spacing:.04em}
+table.t td.n{font-family:var(--f-mono);white-space:nowrap}
+table.t tr.mx1 td{background:#3a2f12}table.t tr.mn1 td{background:#13283a}
+.tw{overflow-x:auto}
+.ok-t{color:var(--ok);font-weight:800}.ng-t{color:var(--ng);font-weight:800}
+.tag{display:inline-block;font:700 11px/1 var(--f-body);padding:3px 6px;border-radius:5px;margin-left:4px}
+.tag.hi{background:#ffd54a;color:#1a1400}.tag.lo{background:#29b6f6;color:#001522}
+
+/* 実験 */
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.btns button{min-height:40px;padding:0 14px;border-radius:10px;border:1px solid #3d4a57;background:#24303c;color:var(--tink);font:700 13px/1 var(--f-body);cursor:pointer}
+.btns button:hover{background:#2c3a48}
+.btns button.bad{border-color:#7a3a3a;background:#3a2226}
+.btns button[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--yel)}
+.verdict{margin-top:10px;padding:10px 12px;border-radius:10px;font:800 15px/1.5 var(--f-disp)}
+.verdict.ok{background:#173a22;color:#a6f0b8}.verdict.ng{background:#3d1b1b;color:#ffc0c0}
+.verdict small{display:block;font:500 13px/1.6 var(--f-body);margin-top:4px}
+.pymsg{font:500 13px/1.6 var(--f-mono);background:#0d1117;border:1px solid #7a3434;color:#ffc0c0;border-radius:8px;padding:8px 12px;margin-top:6px;white-space:pre-wrap}
+
+/* 掛け合い欄 */
+.talk{display:grid;grid-template-columns:132px minmax(0,1fr) 132px;gap:10px;align-items:end;padding:10px 12px 0;background:linear-gradient(180deg,var(--tb) 0%,#1f2a35 100%);border-top:1px solid var(--tline);position:relative}
+.pt{position:relative;height:168px;overflow:hidden;transition:opacity .2s,filter .2s,transform .2s;transform-origin:50% 100%}
+.pt img{position:absolute;left:0;top:0;width:100%;height:auto;display:block}
+.pt .tag2{position:absolute;left:50%;bottom:6px;translate:-50%;font:800 12px/1 var(--f-disp);color:#fff;padding:4px 10px;border-radius:99px;white-space:nowrap}
+#pZ .tag2{background:var(--zun)}#pM .tag2{background:var(--met)}
+.pt:not(.on){opacity:.55;filter:saturate(.6) brightness(.8)}
+.pt.on{animation:bob .34s ease-in-out infinite alternate}
+.pt.on[data-emo="joy"]{animation:hop .26s ease-in-out infinite alternate}
+.pt.on[data-emo="ang"]{animation:shake .09s linear infinite}
+.pt.on[data-emo="sur"]{animation:jump .5s ease-out 1}
+.pt.on[data-emo="swt"]{animation:shiver .16s linear infinite}
+@keyframes bob{to{transform:translateY(-3px)}}@keyframes hop{to{transform:translateY(-7px)}}
+@keyframes shake{25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+@keyframes jump{30%{transform:translateY(-12px) scale(1.04)}65%{transform:none}}
+@keyframes shiver{50%{transform:translateX(1px)}}
+.bubble{align-self:center;margin-bottom:12px;background:var(--bubble);color:var(--bubble-ink);border-radius:14px;padding:12px 16px 14px;min-height:96px;border:3px solid var(--sc,#888);position:relative;cursor:pointer}
+.bubble .who{font:800 13px/1 var(--f-disp);color:var(--sc,#888);margin-bottom:6px;display:block}
+.bubble .tx{font:500 17px/1.6 var(--f-disp);min-height:2.4em}
+.bubble .cnt{position:absolute;right:12px;bottom:6px;font:500 11px/1 var(--f-mono);color:#6b7785}
+.credit{position:absolute;top:6px;right:14px;font:500 11px/1 var(--f-disp);color:#ffffffb0;pointer-events:none}
+
+/* 操作列 */
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 22px}
+.ctrl button{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:700 14px/1 var(--f-body);cursor:pointer}
+.ctrl button.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);min-width:132px}
+.ctrl button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.ctrl .pos{margin-left:auto;color:var(--sub);font:500 13px/1 var(--f-mono)}
+.ctrl .hint{color:var(--sub);font-size:12.5px;width:100%}
+button:focus-visible,input:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
+.vvbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:-12px 0 22px;font-size:13.5px}
+.vvbar #vvst{flex:1 1 260px}
+.vvbar button{min-height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:700 13px/1 var(--f-body);cursor:pointer}
+.lamp{width:12px;height:12px;border-radius:50%;background:#8a8f96;flex:none}
+.lamp.on{background:var(--ok);box-shadow:0 0 0 3px #3fb95040}
+
+/* 下段 */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.card h3{margin:0 0 4px;font:800 16px/1.3 var(--f-disp)}
+.card .sub{color:var(--sub);font-size:13px;margin:0 0 12px}
+.f{display:grid;grid-template-columns:9.5em minmax(0,1fr) 3em;gap:4px 10px;align-items:center;margin:6px 0}
+.f label{font-weight:700;font-size:13.5px;white-space:nowrap}
+.f input{width:100%;min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:var(--bg);color:var(--fg);font:500 14px/1 var(--f-mono)}
+.f input[aria-invalid="true"]{border-color:var(--ng)}
+.f .u{font:500 13px var(--f-mono);color:var(--sub)}
+.ferr{min-height:1.4em;color:var(--ng);font-size:13px;margin:6px 0 0}
+.cardbtn{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.cardbtn button{min-height:38px;padding:0 14px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:700 13px/1 var(--f-body);cursor:pointer}
+pre.code{margin:0;background:var(--tb);color:var(--tink);border-radius:10px;padding:12px 0;overflow-x:auto;font:400 13px/1.6 var(--f-mono);max-height:440px}
+pre.code .ln{display:block;padding:0 14px 0 0;white-space:pre}
+pre.code .ln i{display:inline-block;width:3.6em;padding-right:1em;text-align:right;color:#5d6a77;font-style:normal;user-select:none}
+pre.code .cm{color:#7f9c7a}pre.code .kw{color:#ff9e64}pre.code .st{color:#9ece6a}
+pre.code .sep{display:block;color:#5d6a77;padding-left:1em}
+pre.code .fn{display:block;color:#8fb8e0;padding:2px 14px 4px;font-weight:600}
+
+/* 用語集 */
+.gloss{margin-top:18px}
+.glhead{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:4px}
+.glhead h3{margin:0}
+.glhead input{flex:1 1 240px;min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:var(--bg);color:var(--fg);font:500 14px/1 var(--f-body)}
+.glhead .sub{margin:0}
+.glgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:10px}
+.gl{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);min-width:0;margin:0}
+.gl dt{font:800 15px/1.35 var(--f-disp)}
+.gl dt small{font:400 12px/1.4 var(--f-body);color:var(--sub);margin-left:6px}
+.gl dd{margin:4px 0 0;font-size:13.5px;line-height:1.6}
+.gl dd code{font:500 12.5px var(--f-mono);background:var(--card);padding:0 4px;border-radius:4px}
+.gl .chs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.gl .chs button{min-height:28px;padding:0 9px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:700 12px/1 var(--f-body);cursor:pointer}
+.gl .chs button:hover{border-color:var(--accent)}
+.glempty{color:var(--sub);font-size:14px}
+.foot{color:var(--sub);font-size:12.5px;margin-top:18px}
+
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}.flow4{grid-template-columns:repeat(2,minmax(0,1fr))}.fnode:nth-child(2)::after{display:none}}
+@media (max-width:600px){
+  .talk{grid-template-columns:76px minmax(0,1fr) 76px;gap:6px;padding:8px 6px 0}
+  .pt{height:100px}.bubble .tx{font-size:15px}.bubble{padding:10px 12px 12px;min-height:110px}
+  .axz{grid-template-columns:minmax(0,1fr)}.flow4{grid-template-columns:minmax(0,1fr)}.fnode::after{display:none}
+  .f{grid-template-columns:minmax(0,1fr) 3em}.f label{grid-column:1/-1}.view{padding:14px}.ctrl .pos{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){.pt.on,.pt.on[data-emo]{animation:none}.view [data-k]{transition:none}}
+</style>
+
+<div class="wrap">
+  <h1>MNA 回路解析ラボ</h1>
+  <p class="lead">ずんだもんと四国めたんの掛け合いで、回路計算プログラム PyMNA Pro(<code>solver_core.py</code>)が中でやっている MNA(修正節点解析)を1ステップずつ解説します。題材は電圧源1個・電流源1個・抵抗3本の回路です。行列の組み立てと計算はこのページの中で実際に動いていて、下の入力欄の値を変えると、図・行列・答えがすべて変わります。</p>
+
+  <nav class="nav" id="nav" aria-label="章"></nav>
+
+  <section class="stage" aria-label="解説ステージ">
+    <div class="bhead"><span class="num" id="num"></span><h2 id="ctitle"></h2><span class="py" id="pyref"></span></div>
+    <div class="view" id="view"></div>
+    <div class="talk">
+      <div class="pt" id="pZ" data-emo="n"><img id="iZ" src="img/z_n.webp" alt="ずんだもん"><span class="tag2">ずんだもん</span></div>
+      <div class="bubble" id="bubble" aria-live="polite"><span class="who" id="who"></span><div class="tx" id="tx"></div><span class="cnt" id="cnt"></span></div>
+      <span class="credit" id="credit"></span>
+      <div class="pt" id="pM" data-emo="n"><img id="iM" src="img/m_n.webp" alt="四国めたん"><span class="tag2">四国めたん</span></div>
+    </div>
+  </section>
+
+  <div class="ctrl">
+    <button id="prev" aria-label="前のセリフ">⏮ 前</button>
+    <button class="main" id="auto">▶ 自動再生</button>
+    <button id="next" aria-label="次のセリフ">次 ⏭</button>
+    <button id="tts" aria-pressed="false">🔈 読み上げ オフ</button>
+    <button id="toGloss">📖 用語集</button>
+    <span class="pos" id="pos"></span>
+    <span class="hint">セリフ欄をクリック、または → キーで次へ。Space で自動再生。VOICEVOX が起動していればその声で、なければブラウザ内蔵の音声で読み上げます。</span>
+  </div>
+  <div class="vvbar" role="status"><span class="lamp" id="lamp"></span><span id="vvst">VOICEVOX 確認中…</span><button id="vvre">再接続</button></div>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="inh">
+      <h3 id="inh">回路の値</h3>
+      <p class="sub">回路のつながり方はそのままで、部品の値だけを変えられます。抵抗は kΩ、電流は mA で入力します。</p>
+      <div id="inputs"></div>
+      <p class="ferr" id="ferr" role="alert"></p>
+      <div class="cardbtn"><button id="reset">初期値に戻す</button><button id="iflip">I1 の向きを反転</button><button id="rnd">抵抗をランダムに</button></div>
+    </section>
+    <section class="card" aria-labelledby="codeh">
+      <h3 id="codeh">回路計算プログラムの該当コード</h3>
+      <p class="sub" id="codesub"></p>
+      <div id="code"></div>
+    </section>
+  </div>
+  <section class="card gloss" id="gloss" aria-labelledby="glh">
+    <div class="glhead"><h3 id="glh">用語集</h3><input id="gq" type="search" placeholder="用語を検索(例: スタンプ、GND、行列式)" aria-label="用語を検索"><span class="sub" id="gcount"></span></div>
+    <p class="sub">章のボタンを押すと、その用語が出てくる章へ移動します。</p>
+    <div class="glgrid" id="glist"></div>
+  </section>
+  <p class="foot">音声:VOICEVOX:ずんだもん / VOICEVOX:四国めたん。立ち絵:ずんだもん・四国めたん 立ち絵素材(坂本アヒル)。行列の組み立て(スタンプ)と連立方程式の計算はこのページ内の JavaScript で行っており、solver_core.py の MNASolver と同じ規則・同じ未知数の並び順です。</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- 数値の表示 ---------- */
+// 小数点以下 d 桁で丸め、末尾の0を落とし、マイナスは「−」で表示する
+function fmt(x,d){if(d===undefined)d=3;if(Math.abs(x)<1e-12)x=0;return String(Number(x.toFixed(d))).replace('-','−')}
+const SUB={'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'};
+const vsub=n=>'v'+String(n).split('').map(c=>SUB[c]||c).join('');
+const ohm=k=>k>=1?fmt(k)+' kΩ':fmt(k*1000)+' Ω';
+const natCmp=(a,b)=>String(a).localeCompare(String(b),'en',{numeric:true});
+
+/* ---------- 入力 ---------- */
+const DEF={V:10,R1:1,R2:2,R3:0.5,I:2,tol:5};
+const FIELDS=[['V','Vin(電圧源)','V','--c-v'],['R1','R1','kΩ','--c-r1'],['R2','R2','kΩ','--c-r2'],['R3','R3','kΩ','--c-r3'],['I','I1(電流源)','mA','--c-i'],['tol','抵抗の許容差 ±','%','--sub']];
+$('inputs').innerHTML=FIELDS.map(([k,l,u,c])=>`<div class="f"><label for="in-${k}"><span class="dotc" style="background:var(${c})"></span>${l}</label><input id="in-${k}" inputmode="decimal" value="${DEF[k]}" spellcheck="false" autocomplete="off"><span class="u">${u}</span></div>`).join('');
+function readIn(){
+  const P={},bad=[];
+  for(const [k,l] of FIELDS){const s=$('in-'+k).value.trim(),v=Number(s);
+    let ok=s!==''&&isFinite(v);
+    if(ok&&/^R/.test(k)&&!(v>0))ok=false;
+    if(ok&&k==='tol'&&!(v>=0&&v<100))ok=false;
+    $('in-'+k).setAttribute('aria-invalid',!ok);if(!ok)bad.push(l);else P[k]=v}
+  if(bad.length)throw new Error(bad.join('、')+' の値が正しくありません(抵抗は0より大きい数、許容差は0〜99)');
+  return P;
+}
+const isDefault=()=>FIELDS.every(([k])=>Number($('in-'+k).value)===DEF[k]);
+
+/* ---------- MNA(solver_core.py の MNASolver と同じ規則) ---------- */
+// ネットリストの1行 = [種別, 名前, N+, N-, 値]。値の単位は V / kΩ / mA(→ コンダクタンスは mS)
+function baseRows(P){return [['V','Vin','1','0',P.V],['R','R1','1','2',P.R1],['R','R2','2','0',P.R2],['R','R3','2','3',P.R3],['I','I1','0','3',P.I]]}
+// SPICE 風の値表記(1k、500、2m など)
+function spiceVal(r){const v=r[4];if(r[0]==='R')return v>=1?fmt(v,4)+'k':fmt(v*1000,4);if(r[0]==='I')return fmt(v,4)+'m';return fmt(v,4)}
+const netLine=r=>`${r[0]} ${r[1]} ${r[2]} ${r[3]} ${spiceVal(r)}`.replace(/−/g,'-');
+
+// 行列の各マスを「どの部品が、どの符号で、何を足したか」の一覧として持つ(スタンプの可視化用)
+function build(rows){
+  const set=new Set();rows.forEach(r=>{set.add(r[2]);set.add(r[3])});set.delete('0');
+  const nodes=[...set].sort(natCmp),idx={};nodes.forEach((n,i)=>idx[n]=i);
+  const vs=rows.filter(r=>r[0]==='V'),nN=nodes.length,dim=nN+vs.length;
+  const A=[...Array(dim)].map(()=>[...Array(dim)].map(()=>[])),Z=[...Array(dim)].map(()=>[]);
+  const ix=n=>n==='0'?-1:idx[n];   // GND は -1(行列に入れない)
+  for(const r of rows){
+    const [t,name,a,b,val]=r,p=ix(a),q=ix(b);
+    if(t==='R'){const g=1/val,s='G'+name.slice(1),T=sg=>({c:name,s:sg,sym:s,v:g});
+      if(p>=0)A[p][p].push(T(1));if(q>=0)A[q][q].push(T(1));
+      if(p>=0&&q>=0){A[p][q].push(T(-1));A[q][p].push(T(-1))}}
+    else if(t==='I'){if(p>=0)Z[p].push({c:name,s:-1,sym:name,v:val});if(q>=0)Z[q].push({c:name,s:1,sym:name,v:val})}
+    else if(t==='V'){const k=nN+vs.indexOf(r),T=sg=>({c:name,s:sg,sym:'1',v:1});
+      if(p>=0){A[p][k].push(T(1));A[k][p].push(T(1))}
+      if(q>=0){A[q][k].push(T(-1));A[k][q].push(T(-1))}
+      Z[k].push({c:name,s:1,sym:name,v:val})}
+  }
+  const num=ts=>ts.reduce((s,t)=>s+t.s*t.v,0);
+  return {rows,nodes,vs,nN,dim,A,Z,An:A.map(r=>r.map(num)),Zn:Z.map(num)};
+}
+// 部分ピボット付きガウス消去(Web 版 PyMNA Pro の gaussSolve と同じ方式)。行列式も同時に求める
+function gauss(A0,Z0){
+  const n=Z0.length,A=A0.map(r=>r.slice()),Z=Z0.slice();let det=1;
+  const sc=Math.max(1e-30,...A0.flat().map(Math.abs));
+  for(let c=0;c<n;c++){
+    let p=c,mx=Math.abs(A[c][c]);for(let r=c+1;r<n;r++){const v=Math.abs(A[r][c]);if(v>mx){mx=v;p=r}}
+    if(mx<1e-12*sc)return {ok:false,det:0};
+    if(p!==c){[A[p],A[c]]=[A[c],A[p]];[Z[p],Z[c]]=[Z[c],Z[p]];det=-det}
+    det*=A[c][c];
+    for(let r=c+1;r<n;r++){const f=A[r][c]/A[c][c];if(!f)continue;for(let k=c;k<n;k++)A[r][k]-=f*A[c][k];Z[r]-=f*Z[c]}
+  }
+  const x=Array(n);for(let r=n-1;r>=0;r--){let s=Z[r];for(let k=r+1;k<n;k++)s-=A[r][k]*x[k];x[r]=s/A[r][r]}
+  return {ok:true,det,x};
+}
+function compute(P){
+  const rows=baseRows(P),M=build(rows),S=gauss(M.An,M.Zn);
+  const v={'0':0};M.nodes.forEach((n,i)=>v[n]=S.x[i]);
+  return {P,rows,M,S,v,i:S.x[M.nN]};
+}
+let R=compute(DEF),inErr='';
+const varName=(M,i)=>i<M.nN?vsub(M.nodes[i]):'i_'+M.vs[i-M.nN][1];
+const rowName=(M,i)=>i<M.nN?'ノード'+M.nodes[i]+' の KCL':M.vs[i-M.nN][1]+' の式';
+
+/* ---------- 行列の表示 ---------- */
+// o.only: 表示する部品名の配列(省略で全部) / o.mode: 'sym' 記号のみ, 'num' 数値のみ, 省略で両方 / o.x: 解を表示 / o.zr: 全部0の行を赤く
+function matView(M,o){
+  o=o||{};const inc=t=>!o.only||o.only.includes(t.c);
+  const blk=(r,c)=>r<M.nN?(c<M.nN?'blkG':'blkB'):(c<M.nN?'blkC':'blkD');
+  const zeroRow=r=>M.An[r].every(v=>Math.abs(v)<1e-15);
+  const cell=ts=>{ts=ts.filter(inc);if(!ts.length)return {h:'<span class="zero">0</span>',k:''};
+    const sym=ts.map((t,i)=>`<span class="t-${t.c}">${t.s<0?'−':(i||t.sym==='1'?'+':'')}${t.sym}</span>`).join('');
+    const n=ts.reduce((s,t)=>s+t.s*t.v,0);
+    return {h:(o.mode!=='num'?`<span class="sym">${sym}</span>`:'')+(o.mode!=='sym'?`<span class="num">${fmt(n)}</span>`:''),k:[...new Set(ts.map(t=>t.c))].join(' ')}};
+  const R_=[...Array(M.dim).keys()];
+  let L=`<table><thead><tr><th></th></tr></thead><tbody>`+R_.map(r=>`<tr><th class="rl">${rowName(M,r)}</th></tr>`).join('')+`</tbody></table>`;
+  let A=`<div class="br"><table><thead><tr>${R_.map(c=>`<th>${varName(M,c)} の係数</th>`).join('')}</tr></thead><tbody>`+
+    R_.map(r=>`<tr>${R_.map(c=>{const x=cell(M.A[r][c]);return `<td class="cell ${blk(r,c)}${o.zr&&zeroRow(r)?' zr':''}" data-k="${x.k} c${r}_${c} ${blk(r,c)} row${r}">${x.h}</td>`}).join('')}</tr>`).join('')+`</tbody></table></div>`;
+  let X=`<div class="br"><table><thead><tr><th>x</th></tr></thead><tbody>`+
+    R_.map(r=>`<tr><td class="cell xc" data-k="x${r} ${r<M.nN?'xv':'xi'}"><span class="xl">${varName(M,r)}</span>${o.x?`<span class="xv">${fmt(o.x[r])}</span>`:''}</td></tr>`).join('')+`</tbody></table></div>`;
+  let Zt=`<div class="br"><table><thead><tr><th>Z</th></tr></thead><tbody>`+
+    R_.map(r=>{const x=cell(M.Z[r]);return `<tr><td class="cell ${r<M.nN?'zj':'ze'}" data-k="${x.k} z${r} row${r} ${r<M.nN?'zj':'ze'}">${x.h}</td></tr>`}).join('')+`</tbody></table></div>`;
+  return `<div class="mxwrap"><div class="mx">${L}${A}<span class="op">·</span>${X}<span class="op">=</span>${Zt}</div></div>
+   <p class="unit">単位:コンダクタンス G = 1/R は mS(ミリジーメンス)、電流は mA、電圧は V</p>`;
+}
+// 行 r の式を文章の形にする(例: 1 v₁ − 1 v₂ + 1 i_Vin = 0)
+function eqText(M,r){
+  let s='';M.An[r].forEach((a,c)=>{if(Math.abs(a)<1e-15)return;const ab=Math.abs(a),co=Math.abs(ab-1)<1e-12?'':fmt(ab)+'·';
+    s+=(s?(a<0?' − ':' + '):(a<0?'−':''))+co+`<span class="t-x">${varName(M,c)}</span>`});
+  return (s||'0')+' = '+fmt(M.Zn[r]);
+}
+
+/* ---------- 回路図(SVG) ---------- */
+function zig(x1,y1,x2,y2){
+  const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,px=-uy,py=ux,c=L/2,z=40,P=(t,o)=>`${(x1+ux*t+px*o).toFixed(1)} ${(y1+uy*t+py*o).toFixed(1)}`;
+  let d=`M${x1} ${y1} L${P(c-z,0)}`;for(let i=0;i<8;i++)d+=` L${P(c-z+5+10*i,i%2?-9:9)}`;return d+` L${P(c+z,0)} L${x2} ${y2}`;
+}
+// o.sol: 電圧・電流を書き込む / o.mod: 'cut'(R3を外す) 'nognd'(GNDを外す) 'vpar'(電圧源を並列に追加)
+function ckt(r,o){
+  o=o||{};const P=r.P,Y=60,B=250,X1=90,X2=330,X3=540;
+  const nodeTag=(x,n)=>`<g data-k="n${n}"><circle class="nd" cx="${x}" cy="${Y}" r="5"/><circle class="nbg" cx="${x}" cy="${Y-26}" r="11"/><text class="nlab" x="${x}" y="${Y-21.5}" text-anchor="middle">${n}</text></g>`;
+  const cur=(val,pos,neg)=>(val<0?neg:pos)+' '+fmt(Math.abs(val))+' mA';
+  let s=`<svg viewBox="0 0 640 300" role="img" aria-label="回路図:電圧源 Vin、抵抗 R1・R2・R3、電流源 I1">`;
+  // GND の線
+  s+=`<g data-k="n0"><path class="w" d="M${X1} ${B} H${X3}"/>`+(o.mod==='nognd'?`<path class="xm" d="M196 254 l28 28 M224 254 l-28 28"/><text class="val" x="240" y="282">GND なし</text>`:`<path class="gnd" d="M210 ${B} v14 M194 ${B+14} h32 M200 ${B+20} h20 M206 ${B+26} h8"/><text class="val" x="236" y="${B+22}">0(GND)</text>`)+`</g>`;
+  // Vin
+  s+=`<g data-k="Vin" class="k-Vin"><path class="w" d="M${X1} ${Y} V${B}"/><circle class="src" cx="${X1}" cy="155" r="24"/><text x="${X1}" y="149" text-anchor="middle" style="font-size:16px;fill:var(--c-v)">+</text><text x="${X1}" y="172" text-anchor="middle" style="font-size:16px;fill:var(--c-v)">−</text>
+    <text class="lbl t-Vin" x="${X1-34}" y="148" text-anchor="end" style="fill:var(--c-v)">Vin</text><text class="val" x="${X1-34}" y="166" text-anchor="end">${fmt(P.V)} V</text>
+    ${o.sol?`<text class="si" x="${X1-34}" y="188" text-anchor="end">${cur(-r.i,'↑','↓')}</text>`:''}</g>`;
+  // R1
+  s+=`<g data-k="R1" class="k-R1"><path class="cp" d="${zig(X1,Y,X2,Y)}"/><text class="lbl" x="${(X1+X2)/2}" y="${Y-20}" text-anchor="middle" style="fill:var(--c-r1)">R1 <tspan class="val">${ohm(P.R1)}</tspan></text>
+    ${o.sol?`<text class="si" x="${(X1+X2)/2}" y="${Y+30}" text-anchor="middle">${cur((r.v['1']-r.v['2'])/P.R1,'→','←')}</text>`:''}</g>`;
+  // R2
+  s+=`<g data-k="R2" class="k-R2"><path class="cp" d="${zig(X2,Y,X2,B)}"/><text class="lbl" x="${X2+18}" y="150" style="fill:var(--c-r2)">R2</text><text class="val" x="${X2+18}" y="168">${ohm(P.R2)}</text>
+    ${o.sol?`<text class="si" x="${X2+18}" y="190">${cur(r.v['2']/P.R2,'↓','↑')}</text>`:''}</g>`;
+  // R3
+  s+=`<g data-k="R3" class="k-R3${o.mod==='cut'?' cut':''}"><path class="cp" d="${zig(X2,Y,X3,Y)}"/><text class="lbl" x="${(X2+X3)/2}" y="${Y-20}" text-anchor="middle" style="fill:var(--c-r3)">R3 <tspan class="val">${ohm(P.R3)}</tspan></text>
+    ${o.sol?`<text class="si" x="${(X2+X3)/2}" y="${Y+30}" text-anchor="middle">${cur((r.v['2']-r.v['3'])/P.R3,'→','←')}</text>`:''}</g>`;
+  if(o.mod==='cut')s+=`<path class="xm" d="M421 46 l28 28 M449 46 l-28 28"/>`;
+  // I1(0 → 3 の向きに電流を押し出す)
+  s+=`<g data-k="I1" class="k-I1"><path class="w" d="M${X3} ${Y} V${B}"/><circle class="src" cx="${X3}" cy="155" r="24"/><path class="cp" d="M${X3} 172 V142"/><path class="ah" d="M${X3-6} 145 L${X3} 135 L${X3+6} 145 Z"/>
+    <text class="lbl" x="${X3+34}" y="150" style="fill:var(--c-i)">I1</text><text class="val" x="${X3+34}" y="168">${fmt(P.I)} mA</text></g>`;
+  if(o.mod==='vpar')s+=`<text class="lbl" x="${X1+14}" y="${B-12}" style="fill:var(--c-v);font-size:12.5px">+ Vx ${fmt(P.V/2)} V を並列に追加</text>`;
+  s+=nodeTag(X1,1)+nodeTag(X2,2)+nodeTag(X3,3);
+  if(o.sol)[[X1,'1'],[X2,'2'],[X3,'3']].forEach(([x,n])=>{s+=`<text class="sv" x="${x+10}" y="${Y+52}">${vsub(n)} = ${fmt(r.v[n])} V</text>`});
+  return `<div class="ckt" data-k="ckt">${s}</svg></div>`;
+}
+function netView(rows,extra){
+  return `<div class="net" data-k="net"><div class="nl hd">種別 名前 N+ N- 値${extra?' 許容差%':''}</div><div class="nl cm">* 今日の回路</div>`+
+    rows.map(r=>`<div class="nl" data-k="${r[1]}"><span class="t-${r[1]}">${esc(netLine(r))}${extra&&r[0]==='R'?' '+fmt(R.P.tol):''}</span></div>`).join('')+`</div>`;
+}
+
+/* ---------- 実験(わざと解けない回路にする) ---------- */
+let EXP='ok';
+function expRows(){
+  const rows=R.rows;
+  if(EXP==='cut')return rows.filter(r=>r[1]!=='R3');
+  if(EXP==='nognd')return rows.map(r=>r.map((v,i)=>(i===2||i===3)&&v==='0'?'4':v));
+  if(EXP==='vpar')return rows.concat([['V','Vx','1','0',R.P.V/2]]);
+  return rows;
+}
+const EXPINFO={
+  ok:{why:'',py:''},
+  cut:{why:'ノード3の行(KCL)が全部0になりました。ノード3には電流源しかつながっておらず、押し込まれた電流の行き場がありません。',
+    py:"ノード '3' から GND への直流経路がありません（R/V/E/H/L 経由。抵抗の付け忘れ等を確認してください）"},
+  nognd:{why:'電圧の基準(0 V)がないので、全部の電圧に同じ数を足しても式が成り立ってしまい、答えが1つに決まりません。ノードの行を全部足すと0になります。',
+    py:"基準ノード '0'（GND）がどこにも接続されていません"},
+  vpar:{get why(){return `Vin の式と Vx の式の左辺がまったく同じ(v₁ = …)なのに、右辺が ${fmt(R.P.V)} と ${fmt(R.P.V/2)} で食い違っています。両方を満たす答えはありません。`},
+    py:"電圧源だけでループ（短絡閉路）ができています: ノード '1' と '0' の間"}
+};
+
+/* ---------- ワーストケース(抵抗3本の最小・最大の全組み合わせ) ---------- */
+function corners(){
+  const t=R.P.tol/100,out=[];
+  for(let m=0;m<8;m++){
+    const P=Object.assign({},R.P);['R1','R2','R3'].forEach((k,b)=>{P[k]=R.P[k]*(m>>b&1?1+t:1-t)});
+    const c=compute(P);out.push({P,v2:c.v['2'],v3:c.v['3'],hi:[m>>0&1,m>>1&1,m>>2&1]});
+  }
+  return out;
+}
+function rangeOf(cs,k){let lo=Infinity,hi=-Infinity;cs.forEach(c=>{lo=Math.min(lo,c[k]);hi=Math.max(hi,c[k])});return [lo,hi]}
+
+/* ---------- KCL の検算 ---------- */
+function kclRows(){
+  const v=R.v,P=R.P,i=R.i;
+  return [
+    ['1',[['R1',(v['1']-v['2'])/P.R1],['Vin',i]]],
+    ['2',[['R1',(v['2']-v['1'])/P.R1],['R2',v['2']/P.R2],['R3',(v['2']-v['3'])/P.R3]]],
+    ['3',[['R3',(v['3']-v['2'])/P.R3],['I1',-P.I]]]
+  ];
+}
+
+/* ---------- 各章:図(view)・該当コード(code)・掛け合い(lines) ---------- */
+// lines: [話者 z/m, 感情 n/joy/ang/sad/sur/swt, セリフ(文字列 or 関数), 強調する data-k(空白区切り)]
+const CH=[
+{nav:'全体像',title:'PyMNA Pro は中で何をしている?',py:'MNASolver.solve()',code:'intro',
+ view:r=>`<div class="flow4">
+   <div class="fnode" data-k="f1"><b>① ネットリスト</b><small>回路を「1部品1行」のテキストで書く</small></div>
+   <div class="fnode" data-k="f2"><b>② スタンプ</b><small>部品ごとに、行列 A と右辺 Z の決まったマスへ値を足す</small></div>
+   <div class="fnode" data-k="f3"><b>③ 解く</b><small>連立方程式 A x = Z を <code>np.linalg.solve</code> で解く</small></div>
+   <div class="fnode" data-k="f4"><b>④ 結果</b><small>各ノードの電圧(と電圧源の電流)が出てくる</small></div>
+ </div>
+ <div class="axz" data-k="mat">
+   <div><b>A</b>係数行列<br><span>抵抗やつながり方の「ルール」の集まり</span></div>
+   <div><b class="t-x">x</b>未知数ベクトル<br><span>知りたいノード電圧と、電圧源の電流</span></div>
+   <div><b>Z</b>右辺ベクトル<br><span>電池や電流源などの「入力」</span></div>
+ </div>`,
+ lines:[
+  ['z','joy','めたん、この回路計算のプログラム、PyMNA Pro って中で何をしているのだ?'],
+  ['m','n','回路図を「連立方程式」に翻訳して、コンピュータに解かせているの。その翻訳のルールが MNA、修正節点解析よ。','mat'],
+  ['m','n','流れは4段階。ネットリストを読む、行列 A と右辺 Z にスタンプする、np.linalg.solve で解く、ノードごとの電圧を返す。','f1 f2 f3 f4'],
+  ['z','swt','行列…数学っぽくて身構えるのだ…'],
+  ['m','joy','大丈夫。やることは「決まったマスに数字を足すだけ」。今日は電圧源1個、電流源1個、抵抗3本の回路で、1マスずつ見ていきましょう。'],
+  ['m','n','計算はこのページの中で実際に動いているわ。下の入力欄で値を変えると、行列も答えも全部変わるわよ。']
+ ]},
+{nav:'今日の回路',title:'回路図からネットリストへ',py:'parse_netlist_text()',code:'netlist',
+ view:r=>`<div class="row2"><div>${ckt(r)}</div><div><h3>ネットリスト(PyMNA Pro の書式)</h3>${netView(r.rows)}
+   <div class="fmt"><span>種別</span><span>名前</span><span>N+(プラス側)</span><span>N−(マイナス側)</span><span>値</span></div>
+   <p class="note">値の <code>k</code> はキロ(×1000)、<code>m</code> はミリ(×1/1000)。ノード <code>0</code> が GND です。</p></div></div>`,
+ lines:[
+  ['m','n',(r,v)=>`今日の回路はこれ。左に ${v.V} V の電圧源 Vin、上に抵抗 R1 と R3、真ん中に R2、右に電流源 I1。`,'ckt'],
+  ['m','n','電線でつながっている点を「ノード」と呼んで、番号をつけるの。下の線全体が0番、つまり GND。電圧の基準ね。','n0'],
+  ['m','n','残りはノード1、2、3の3つ。この3つの電圧を求めるのが今日のゴールよ。','n1 n2 n3'],
+  ['z','n','回路図のままだと、プログラムは読めないのだな?'],
+  ['m','n','そう。だから1部品1行の「ネットリスト」に書くの。PyMNA Pro では、種別、名前、プラス側ノード、マイナス側ノード、値の順よ。','net'],
+  ['m','n',(r,v)=>`たとえば R1 の行は「抵抗 R1 がノード1と2の間にあって ${v.R1t}」という意味。`,'R1'],
+  ['m','n',(r,v)=>`I1 の行は「電流源 I1 が、ノード0から3の向きに ${v.I} mA を押し出す」という意味よ。`,'I1'],
+  ['m','n','parse_netlist_text は、これを空白で区切って、コメントを捨てて、行ごとのリストにするだけ。','net']
+ ]},
+{nav:'ノード解析',title:'KCL で式を立てる…と、電圧源で詰まる',py:'self.nodes',code:'nodes',
+ view:r=>`<div class="row2"><div>${ckt(r)}</div><div class="eqs">
+   <div class="bx" data-k="kcl" style="margin-bottom:10px"><span class="lb">キルヒホッフの電流則(KCL)</span>ノードから<b>出ていく電流の合計</b> = 外から<b>押し込まれた電流</b><br><span style="color:var(--tsub);font-size:13px">抵抗を流れる電流 = (両端の電圧の差) ÷ 抵抗(オームの法則)</span></div>
+   <div class="eq" data-k="eq2"><span class="lb">ノード2</span>(v₂−v₁)/<span class="t-R1">R1</span> + v₂/<span class="t-R2">R2</span> + (v₂−v₃)/<span class="t-R3">R3</span> = 0</div>
+   <div class="eq" data-k="eq3"><span class="lb">ノード3</span>(v₃−v₂)/<span class="t-R3">R3</span> = <span class="t-I1">I1</span></div>
+   <div class="eq" data-k="eq1"><span class="lb">ノード1</span>(v₁−v₂)/<span class="t-R1">R1</span> + <span class="q">Vin に流れ込む電流 = ?</span> = 0</div>
+ </div></div>`,
+ lines:[
+  ['m','n','基本はキルヒホッフの電流則、KCL。「ノードから出ていく電流の合計は、外から押し込まれた電流と等しい」。','kcl'],
+  ['m','n','抵抗を流れる電流は、両端の電圧の差を抵抗で割れば出せる。オームの法則ね。だからノード2の式は、こう書けるわ。','eq2 n2'],
+  ['m','n','ノード3は R3 と電流源だけ。R3 から出ていく電流が、I1 が押し込む電流と等しい。','eq3 n3'],
+  ['z','sur','じゃあノード1は…あれ?電圧源に流れる電流がわからないのだ!','eq1 Vin'],
+  ['m','n','そこが普通のノード解析の壁。電圧源は「電圧は決まっているけど、流れる電流は回路しだい」。だから式に正体不明の電流が残ってしまうの。','eq1'],
+  ['z','ang','ずるいのだ、電圧源!'],
+  ['m','joy','ふふ。この壁を壊すのが、次の MNA の発想よ。']
+ ]},
+{nav:'MNA の発想',title:'わからない電流も未知数にしてしまう',py:'self.dim = self.num_n + self.num_v',code:'mna',
+ view:r=>`<div class="row2" style="margin-bottom:14px">
+   <div class="bx"><span class="lb">未知数(4個)</span><span class="t-x" style="font:700 15px var(--f-mono)">x = [ v₁, v₂, v₃, i_Vin ]</span><br><span style="font-size:13px;color:var(--tsub)">ノード電圧3つ(num_n = 3)+ 電圧源の電流1つ(num_v = 1)</span></div>
+   <div class="bx"><span class="lb">行列の4つのブロック</span><span style="font:600 14px var(--f-mono)">[ G  B ] [ v ]   [ j ]<br>[ C  D ] [ i ] = [ e ]</span></div>
+  </div>${matView(r.M,{only:[]})}`,
+ lines:[
+  ['m','n','MNA の発想はシンプル。わからない電流があるなら、それも最初から未知数に入れてしまえばいい。','xi'],
+  ['m','n','未知数はノード電圧3つと、電圧源 Vin の電流1つで、全部で4つ。py では num_n と num_v を足して dim、行列の大きさを決めているわ。','xv xi'],
+  ['z','n','未知数が4つなら、式も4本いるのだな。'],
+  ['m','n',(r,v)=>`その通り。ノード1、2、3の KCL で3本、それと「Vin の両端の電圧は ${v.V} V」という式で1本。合わせて4本よ。`,'row0 row1 row2 row3'],
+  ['m','n','左上の3×3がコンダクタンスの G ブロック。右と下の帯 B と C が、電圧源のつながりを表すの。右下の D は、今日の回路では0のままね。','blkG blkB blkC blkD'],
+  ['m','n','ここからは、この空っぽの4×4のマスに、部品を1個ずつスタンプしていくわ。']
+ ]},
+{nav:'抵抗 R1',title:'抵抗のスタンプ:4か所に ±G',py:"if rtype == 'R':",code:'R',
+ view:r=>`<div class="row2" style="margin-bottom:12px"><div class="col"><h3>抵抗のスタンプ規則(G = 1/R)</h3>
+   <div class="rule"><div class="h"></div><div class="h">列 N+</div><div class="h">列 N−</div><div class="h">行 N+</div><div class="p">+G</div><div class="m">−G</div><div class="h">行 N−</div><div class="m">−G</div><div class="p">+G</div></div>
+   <p class="note" style="margin:0">R1 は N+ = 1、N− = 2。G1 = 1/${ohm(r.P.R1)} = ${fmt(1/r.P.R1)} mS</p></div>
+   <div class="col" data-k="why"><h3>なぜこの4か所?</h3><p>ノード1から R1 を通って出ていく電流は <span class="t-R1">G1</span>·(v₁ − v₂)。<br>→ 行1の v₁ に <b>+G1</b>、v₂ に <b>−G1</b>。</p><p style="margin:0">ノード2から見ると向きが逆なので、行2の v₂ に +G1、v₁ に −G1。</p></div></div>
+  ${matView(r.M,{only:['R1']})}`,
+ lines:[
+  ['m','n',(r,v)=>`最初は抵抗 R1。抵抗はコンダクタンス G、つまり 1/R の形で使うの。R1 = ${v.R1t} なら G1 = ${v.G1} mS。`,'R1'],
+  ['m','n','R1 はノード1と2の間にあるから、行1列1と行2列2に +G1、行1列2と行2列1に −G1。4か所にセットでスタンプよ。','R1'],
+  ['z','sur','なんでその4か所なのだ?','why'],
+  ['m','n','ノード1の KCL で考えて。R1 を通ってノード1から出ていく電流は G1 かける、v₁ ひく v₂。v₁ の係数が +G1、v₂ の係数が −G1 でしょう?','why c0_0 c0_1'],
+  ['m','n','ノード2から見ると向きが逆だから、v₂ に +G1、v₁ に −G1。これで4マスがそろうの。','c1_0 c1_1'],
+  ['z','joy','回路を考えなくても、つながっている番号さえわかれば押せるのだな!'],
+  ['m','joy','そう。py でも A[n_pos, n_pos] += g のように、たった4行で書いてあるわ。']
+ ]},
+{nav:'抵抗 R2・R3',title:'GND につながる抵抗と、スタンプの積み重ね',py:'node_map[name] = -1',code:'Rgnd',
+ view:r=>`<div class="row2" style="margin-bottom:12px">
+   <div class="col" data-k="R2"><h3><span class="t-R2">R2</span>:ノード2 − GND</h3><p style="margin:0">GND は未知数に入れない(番号 −1)。<br>→ 行2列2 に <b>+G2</b> を1つ足すだけ。G2 = ${fmt(1/r.P.R2)} mS</p></div>
+   <div class="col" data-k="R3"><h3><span class="t-R3">R3</span>:ノード2 − ノード3</h3><p style="margin:0">R1 と同じく4か所。G3 = ${fmt(1/r.P.R3)} mS<br>行2列2 には G1・G2・G3 が積み重なる。</p></div></div>
+  ${matView(r.M,{only:['R1','R2','R3']})}`,
+ lines:[
+  ['m','n','次は R2。こっちはノード2と GND の間にあるわ。','R2'],
+  ['m','n','GND は電圧0と決めた基準だから、未知数にも行列にも入れない。py では GND の番号を −1 にして、その行と列はスキップしているの。','R2'],
+  ['m','n','だから R2 は、行2列2に +G2 を1つ足すだけ。','c1_1'],
+  ['m','n',(r,v)=>`R3 はノード2と3の間だから、R1 と同じく4か所。行2列2は G1 と G2 と G3 が積み重なって、合計 ${v.d22} になるわ。`,'R3 c1_1'],
+  ['z','sur','スタンプが重なると、どんどん足されていくのだな!','c1_1'],
+  ['m','n','その通り。対角のマスは「そのノードにつながる抵抗のコンダクタンスの合計」、それ以外は「2つのノードの間の抵抗のマイナス」。左上と右下で対称になっているのもわかるでしょう?','blkG']
+ ]},
+{nav:'電流源 I1',title:'電流源のスタンプ:右辺 Z に足す',py:"elif rtype == 'I':",code:'I',
+ view:r=>`<div class="row2" style="margin-bottom:12px">
+   <div class="col" data-k="I1"><h3><span class="t-I1">I1</span>:N+ = 0、N− = 3</h3><p style="margin:0">電流源の中を N+ → N− の向きに流れる。外の回路から見ると、<b>ノード3に ${fmt(r.P.I)} mA が押し込まれる</b>。<br>→ Z の行3に <b>+I1</b>(N+ 側は GND なのでスキップ)</p></div>
+   <div class="col"><h3>KCL との対応</h3><p style="margin:0">左辺 A x = ノードから<b>出ていく</b>電流<br>右辺 Z = ノードに<b>押し込まれる</b>電流</p></div></div>
+  ${matView(r.M,{only:['R1','R2','R3','I1']})}`,
+ lines:[
+  ['m','n','次は電流源 I1。電流源は電流の大きさが決まっているから、未知数を増やさないの。スタンプ先は右辺のベクトル Z よ。','I1'],
+  ['m','n',(r,v)=>`ネットリストではプラス側が0、マイナス側が3。電流源の中を0から3へ流れる向きね。だから外の回路から見ると、ノード3に ${v.I} mA が押し込まれる。`,'I1'],
+  ['m','n','py では Z[n_neg] += val。ノード3の行に +I1 を足すわ。プラス側は GND だからスキップ。','z2'],
+  ['z','n','押し込まれる電流は右辺、出ていく電流は左辺なのだな。','z2 row2'],
+  ['m','joy','そう。KCL の「出ていく合計 = 押し込まれた分」を、そのまま行列にしたのが A x = Z なの。']
+ ]},
+{nav:'電圧源 Vin',title:'電圧源のスタンプ:行と列を1本ずつ増やす',py:"elif rtype == 'V':",code:'V',
+ view:r=>`<div class="row2" style="margin-bottom:12px">
+   <div class="col" data-k="Vin"><h3><span class="t-Vin">Vin</span>:N+ = 1、N− = 0</h3><p style="margin:0">4番目の列(i_Vin の係数):行1に <b>+1</b><br>4番目の行(Vin の式):列1に <b>+1</b>、Z に <b>${fmt(r.P.V)}</b><br>N− 側は GND なのでスキップ</p></div>
+   <div class="col" data-k="xi"><h3>i_Vin の向き</h3><p style="margin:0">N+ 端子から電源の中へ<b>流れ込む向き</b>を正とする(SPICE と同じ決まり)。電源が電流を送り出しているときはマイナスになる。</p></div></div>
+  ${matView(r.M,{mode:'both'})}`,
+ lines:[
+  ['m','n','最後は電圧源 Vin。ここが MNA の一番おいしいところよ。','Vin'],
+  ['m','n','Vin のために増やした4番目の列は、電流 i_Vin の係数。ノード1の KCL に +1。マイナス側は GND だから何もなし。','c0_3'],
+  ['m','n',(r,v)=>`4番目の行は Vin 自身の式。v₁ ひく v₀ は ${v.V} V だから、行4列1に +1、右辺に ${v.V} を置くの。`,'c3_0 z3'],
+  ['z','sur','+1 と −1 のマスと、右辺の電圧だけで済むのだ!'],
+  ['m','n','B と C が同じ形の転置になるから、行列は対称のまま。py では A[n_pos, v_idx] += 1 と A[v_idx, n_pos] += 1 を同じ行で書いているわね。','c0_3 c3_0'],
+  ['m','n','i_Vin の向きは「プラス端子から電源の中へ流れ込む向き」が正。これは SPICE と同じ決まりよ。','xi']
+ ]},
+{nav:'完成',title:'すべての部品をスタンプした A x = Z',py:'logger.debug("--- MNA Matrix A ---")',code:'full',
+ view:r=>matView(r.M,{mode:'num'})+`<div class="eqs" style="margin-top:12px">`+[...Array(r.M.dim).keys()].map(i=>`<div class="eq" data-k="row${i} eq${i}"><span class="lb">${rowName(r.M,i)}</span>${eqText(r.M,i)}</div>`).join('')+`</div>`,
+ lines:[
+  ['m','n','全部のスタンプが終わったわ。これが回路全体を表す連立方程式、A x = Z。'],
+  ['m','n','1行目はノード1の KCL。さっき壁にぶつかった式に、i_Vin がちゃんと未知数として入っているわね。','row0'],
+  ['m','n',(r,v)=>`2行目と3行目はノード2と3の KCL。4行目は v₁ = ${v.V} V。`,'row1 row2 row3'],
+  ['z','n','行列の中の0は、どういう意味なのだ?'],
+  ['m','n','その2つのノードの間に、直接つながっている部品がないという意味。大きな回路ほど0だらけになるから、本格的なシミュレータは0を省いて計算を速くしているの。'],
+  ['z','joy','回路図が、ただの数字の表になったのだ!']
+ ]},
+{nav:'解く',title:'np.linalg.solve で解いて、KCL で検算',py:'res = np.linalg.solve(A, Z)',code:'solve',
+ view:r=>{const K=kclRows();
+  return `<div class="row2"><div>${ckt(r,{sol:true})}</div><div>
+   <div data-k="sol">${matView(r.M,{mode:'num',x:r.S.x})}</div></div></div>
+   <div class="tw" data-k="kcl" style="margin-top:12px"><table class="t"><thead><tr><th>ノード</th><th>各部品から出ていく電流(mA)・マイナスは入ってくる電流</th><th>合計</th></tr></thead><tbody>`+
+   K.map(([n,ts])=>{const sum=ts.reduce((s,t)=>s+t[1],0);return `<tr><td class="n">${n}</td><td class="n">${ts.map(([c,x])=>`<span class="t-${c}">${c}</span> ${fmt(x)}`).join('  /  ')}</td><td class="n ${Math.abs(sum)<1e-9?'ok-t':'ng-t'}">${fmt(sum)} ${Math.abs(sum)<1e-9?'✓':'✗'}</td></tr>`}).join('')+`</tbody></table></div>`},
+ lines:[
+  ['m','n','あとは解くだけ。py では np.linalg.solve の1行。中身は高校で習う連立方程式の消去法を、機械的にくり返しているの。Web 版ではそれを JavaScript で自前で書いているわ。','sol'],
+  ['m','n',(r,v)=>`答えは v₁ が ${v.v1} V、v₂ が ${v.v2} V、v₃ が ${v.v3} V。`,'xv'],
+  ['m','n',(r,v)=>r.i<0?`i_Vin は ${v.i} mA。マイナスは決めた向きと逆、つまり Vin のプラス端子から ${v.iabs} mA が回路へ出ていくという意味ね。`:`i_Vin は ${v.i} mA でプラス。今の値だと、電流が Vin のプラス端子から電源の中へ流れ込んでいる、つまり Vin が押し返されている向きね。`,'xi Vin'],
+  ['z','n','本当に合ってるのか、確かめたいのだ。'],
+  ['m','n','下の表で、各ノードから出ていく電流を足してみて。どのノードも合計が0になっているはずよ。','kcl'],
+  ['z','joy','どのノードも、出入りする電流がぴったり釣り合っているのだ!','kcl'],
+  ['m','n','py の最後は、解いた x をノード名の辞書に戻して返すだけ。GND は 0 V として付け足しているわ。']
+ ]},
+{nav:'実験',title:'わざと解けない回路にしてみる',py:'netlist_validator.py',code:'singular',
+ view:r=>{const M=build(expRows()),S=gauss(M.An,M.Zn),I=EXPINFO[EXP];
+  const b=(k,l,bad)=>`<button data-exp="${k}"${bad?' class="bad"':''} aria-pressed="${EXP===k}">${l}</button>`;
+  return `<div class="btns" data-k="btn">${b('ok','✅ 元の回路')}${b('cut','✂ R3 を外す',1)}${b('nognd','⏚ GND を外す',1)}${b('vpar','🔋 Vx を Vin に並列',1)}</div>
+   <div class="row2"><div>${ckt(r,{mod:EXP==='ok'?'':EXP})}</div>
+   <div data-k="res">${S.ok?`<div class="verdict ok">✅ 解けました(行列式 = ${fmt(S.det,4)})<small>${M.nodes.map((n,i)=>vsub(n)+' = '+fmt(S.x[i])+' V').join('、')}</small></div>`
+     :`<div class="verdict ng">⛔ 行列式 = 0:逆行列が作れないので解けません<small>${I.why}</small></div>`}
+     ${I.py?`<div data-k="msg"><p class="note">PyMNA Pro は解く前の検証で、このミスをこう知らせます:</p><div class="pymsg">[ERROR] ${esc(I.py)}</div></div>`:''}</div></div>
+   <div data-k="mat" style="margin-top:12px">${matView(M,{mode:'num',zr:true})}</div>`},
+ after:()=>{$('view').querySelectorAll('[data-exp]').forEach(b=>b.onclick=()=>{EXP=b.dataset.exp;renderView();const l=CH[shownCh].lines[FLAT[p][1]];highlight(l[3]||'')})},
+ lines:[
+  ['m','n','ここからはおまけの実験。わざと回路を壊して、MNA がどう反応するか見てみましょう。','btn'],
+  ['z','ang','R3 を外してやるのだ!ボタンを押してみるのだ!','btn'],
+  ['m','n','するとノード3には電流源しかつながっていない。行3が全部0になって、行列式が0。逆行列が作れないから解けないの。','mat res'],
+  ['m','n','物理的にも、押し込まれた電流の行き場がないわよね。数学がそれを「解なし」として教えてくれているの。','res'],
+  ['z','n','GND を外したり、電圧源を並べたりしても壊れるのだな?','btn'],
+  ['m','n','GND がないと電圧の基準がなくて、答えが1つに決まらない。違う電圧の電圧源を並列にすると、v₁ が2つの値を同時にとる矛盾になる。どちらも行列式0よ。','res'],
+  ['m','n','実際の PyMNA Pro は、解く前の検証でこういうミスを見つけて、日本語のエラーで教えてくれるわ。それでもすり抜けたら、solve の例外を捕まえて「行列が特異で解けません」と表示するの。','msg']
+ ]},
+{nav:'公差',title:'部品のばらつきとワーストケース解析',py:'run_worst_case_analysis()',code:'wc',
+ view:r=>{const cs=corners(),[a2,b2]=rangeOf(cs,'v2'),[a3,b3]=rangeOf(cs,'v3');
+  const tg=(x,lo,hi)=>Math.abs(x-hi)<1e-12?'<span class="tag hi">最大</span>':Math.abs(x-lo)<1e-12?'<span class="tag lo">最小</span>':'';
+  return `<div class="row2"><div>${netView(r.rows,true)}
+    <div class="bx" data-k="rng" style="margin-top:12px"><span class="lb">抵抗 ±${fmt(r.P.tol)} % のときの電圧の幅</span>
+     <span style="font:600 14px/1.8 var(--f-mono)">v₂:${fmt(a2)} 〜 ${fmt(b2)} V(標準 ${fmt(r.v['2'])} V)<br>v₃:${fmt(a3)} 〜 ${fmt(b3)} V(標準 ${fmt(r.v['3'])} V)</span></div></div>
+   <div class="tw" data-k="tbl"><table class="t"><thead><tr><th>#</th><th class="t-R1">R1</th><th class="t-R2">R2</th><th class="t-R3">R3</th><th>v₂ (V)</th><th>v₃ (V)</th></tr></thead><tbody>`+
+   cs.map((c,i)=>`<tr><td class="n">${i+1}</td>${['R1','R2','R3'].map((k,j)=>`<td class="n">${c.hi[j]?'最大':'最小'}<br><span style="color:var(--tsub)">${ohm(c.P[k])}</span></td>`).join('')}<td class="n">${fmt(c.v2)}${tg(c.v2,a2,b2)}</td><td class="n">${fmt(c.v3)}${tg(c.v3,a3,b3)}</td></tr>`).join('')+`</tbody></table></div></div>`},
+ lines:[
+  ['m','n',(r,v)=>`実際の抵抗には誤差があるの。たとえば ±${v.tol} % なら、${v.R1t} の R1 は、その ${v.tol} % 上下のどこかの値になる。`,'net'],
+  ['m','n','PyMNA Pro のワーストケース解析は、部品の値を変えて solve を何度も呼んで、電圧がいちばん高くなる組み合わせと低くなる組み合わせを探すの。','tbl'],
+  ['m','n','抵抗3本なら、それぞれ最小か最大かで、2の3乗の8通り。この表は8通り全部を MNA で解いた結果よ。','tbl'],
+  ['z','sur',(r,v)=>`ノード3の電圧、${v.v3lo} V から ${v.v3hi} V まで動くのだ!`,'rng'],
+  ['m','n','部品が増えると組み合わせは爆発的に増えるから、py ではまず1個ずつ動かして「上げると電圧が上がるか下がるか」を調べて、向きを決めているの。それが右のコードね。'],
+  ['m','joy','行列を作る仕組みが同じだから、何百回解いても一瞬なのよ。']
+ ]},
+{nav:'答え合わせ',title:'手計算の公式と照合',py:'self.last_diagnostics',code:'check',
+ view:r=>{const P=r.P,v2=(P.V/P.R1+P.I)/(1/P.R1+1/P.R2),v3=v2+P.I*P.R3,iv=-(P.V-v2)/P.R1;
+  const rows=[['v₁','Vin',P.V,r.v['1']],['v₂','(Vin/R1 + I1) ÷ (1/R1 + 1/R2)',v2,r.v['2']],['v₃','v₂ + I1 × R3',v3,r.v['3']],['i_Vin','−(Vin − v₂) / R1',iv,r.i]];
+  return `<div class="tw" data-k="hand"><table class="t"><thead><tr><th>未知数</th><th>手計算の公式</th><th>手計算</th><th>MNA の結果</th><th>一致</th></tr></thead><tbody>`+
+   rows.map(([n,f,h,m])=>{const ok=Math.abs(h-m)<1e-9*Math.max(1,Math.abs(h));return `<tr><td class="n t-x">${n}</td><td class="n">${f}</td><td class="n">${fmt(h,4)}</td><td class="n">${fmt(m,4)}</td><td class="${ok?'ok-t':'ng-t'}">${ok?'✓':'✗'}</td></tr>`}).join('')+
+   `</tbody></table></div><p class="note">v₂ の公式は、ノード2の KCL に「ノード3から入る電流 = I1」を代入して整理したものです。手計算は回路ごとに工夫が要りますが、MNA は部品が何千個あっても同じスタンプ規則で式が作れます。</p>`},
+ lines:[
+  ['m','n','最後に答え合わせ。この回路なら、手計算でも公式が作れるわ。','hand'],
+  ['m','n','v₂ は、R1 から入る電流と I1 を足して、R1 と R2 の並列のコンダクタンスで割った値。v₃ は v₂ に、I1 かける R3 を足した値ね。','hand'],
+  ['z','joy',r=>{const P=r.P,v2=(P.V/P.R1+P.I)/(1/P.R1+1/P.R2);return Math.abs(v2-r.v['2'])<1e-9?'全部に ✓ がついたのだ!MNA と手計算がぴったり同じなのだ!':'あれ、✗ があるのだ…?'},'hand'],
+  ['m','n','手計算は回路ごとに工夫がいるけど、MNA なら部品が何千個あっても同じルールで機械的に式が作れる。だからコンピュータの回路計算の標準になっているの。'],
+  ['z','joy','部品ごとに決まったマスにスタンプして、解くだけ!回路計算の魔法の正体がわかったのだ!'],
+  ['m','joy','よくできました。下の入力欄で値を変えて、行列や答えがどう変わるか試してみてね。']
+ ]}
+];
+
+/* ---------- 回路計算プログラムの該当コード(行番号つき・原文のまま) ---------- */
+// [ファイル名, 開始行, コード]
+const CODE={
+ intro:[['solver_core.py',423,`    def solve(self, params):
+        A = np.zeros((self.dim, self.dim))
+        Z = np.zeros(self.dim)
+        for row_idx, row in enumerate(self.netlist):`],['solver_core.py',527,`        try:
+            res = np.linalg.solve(A, Z)`],['solver_core.py',551,`        volts = {n: (res[i] if i != -1 else 0.0) for n, i in self.node_map.items()}
+        volts['0'] = 0.0
+        return volts`]],
+ netlist:[['solver_core.py',50,`    netlist, line_numbers = [], []
+    for ln, line in enumerate(str(text).split('\\n'), 1):
+        s = line.strip()
+        if not s or s.startswith((';', '*')):
+            continue
+        s = s.split(';', 1)[0].strip()
+        if not s:
+            continue
+        netlist.append(re.split(r'\\s+', s))
+        line_numbers.append(ln)
+    return netlist, line_numbers`]],
+ nodes:[['solver_core.py',386,`        self.nodes = set()
+        for row in netlist:
+            if len(row) < 4: continue
+            self.nodes.add(str(row[2]))
+            self.nodes.add(str(row[3]))`],['solver_core.py',400,`        self.nodes.discard('0')`]],
+ mna:[['solver_core.py',406,`        # MNAの追加未知数(自身に流れる電流)が必要なのは、V/E/Hの3種類。
+        # V: 独立電圧源, E: VCVS(出力は電圧), H: CCVS(出力は電圧)はいずれも
+        # 「2端子間の電位差」を拘束条件として持つため、その電流を未知数として立てる必要がある。
+        # I(電流源)/F(CCCS)/G(VCCS)は出力が電流であり、既存の節点方程式だけで表現できるため
+        # 追加の未知数は不要。
+        self.v_sources = [r for r in netlist if r[0].upper() in ['V', 'E', 'H']]
+        self.num_v = len(self.v_sources)
+        self.v_map = {r[1]: i for i, r in enumerate(self.v_sources)}
+        self.dim = self.num_n + self.num_v`]],
+ R:[['solver_core.py',436,`            if rtype == 'R':
+                g = 1.0 / val if val != 0 else G_ZERO_R
+                if n_pos != -1: A[n_pos, n_pos] += g
+                if n_neg != -1: A[n_neg, n_neg] += g
+                if n_pos != -1 and n_neg != -1: A[n_pos, n_neg] -= g; A[n_neg, n_pos] -= g`]],
+ Rgnd:[['solver_core.py',355,`    gnd_root = find('0')
+    names.discard('0')
+    node_map, root_index = {}, {}
+    for name in sorted(names, key=sort_key):
+        root = find(name)
+        if root == gnd_root:
+            node_map[name] = -1`],['solver_core.py',434,`            n_pos, n_neg = self.node_map.get(str(row[2]), -1), self.node_map.get(str(row[3]), -1)`],['solver_core.py',436,`            if rtype == 'R':
+                g = 1.0 / val if val != 0 else G_ZERO_R
+                if n_pos != -1: A[n_pos, n_pos] += g
+                if n_neg != -1: A[n_neg, n_neg] += g
+                if n_pos != -1 and n_neg != -1: A[n_pos, n_neg] -= g; A[n_neg, n_pos] -= g`]],
+ I:[['solver_core.py',441,`            elif rtype == 'I':
+                # Current source flowing from n_neg to n_pos
+                if n_pos != -1: Z[n_pos] -= val
+                if n_neg != -1: Z[n_neg] += val`]],
+ V:[['solver_core.py',445,`            elif rtype == 'V':
+                # Voltage source from n_pos to n_neg
+                v_idx = self.num_n + self.v_map[name]
+                if n_pos != -1: A[n_pos, v_idx] += 1; A[v_idx, n_pos] += 1
+                if n_neg != -1: A[n_neg, v_idx] -= 1; A[v_idx, n_neg] -= 1
+                Z[v_idx] = val`]],
+ full:[['solver_core.py',521,`        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("--- MNA Matrix A ---\\n%s", A)
+            logger.debug("--- MNA Vector Z ---\\n%s", Z)
+            logger.debug("Node Map: %s", self.node_map)
+            logger.debug("Voltage Source Map: %s", self.v_map)`]],
+ solve:[['solver_core.py',527,`        try:
+            res = np.linalg.solve(A, Z)
+        except np.linalg.LinAlgError as e:
+            raise NetlistError([Issue(
+                "ERROR", None, "singular_matrix",
+                "MNA 行列が特異で解けません。未接地・電圧源の短絡ループ・"
+                f"従属源の矛盾などが原因です（元エラー: {e}）。",
+            )]) from e`],['solver_core.py',551,`        volts = {n: (res[i] if i != -1 else 0.0) for n, i in self.node_map.items()}
+        volts['0'] = 0.0
+        return volts`]],
+ singular:[['netlist_validator.py',133,`    has_ground = '0' in all_nodes
+    if not has_ground:
+        issues.append(Issue("ERROR", None, "no_ground",
+                            "基準ノード '0'（GND）がどこにも接続されていません"))`],['netlist_validator.py',151,`    if has_ground:
+        for nn in sorted(solver_core.find_floating_nodes(rows, path_types=path_types)):
+            issues.append(Issue("ERROR", None, "floating_node",
+                                f"ノード '{nn}' から GND への直流経路がありません"
+                                "（R/V/E/H/L 経由。抵抗の付け忘れ等を確認してください）"))`],['netlist_validator.py',171,`        if not uf.union(str(row[2]), str(row[3])):
+            issues.append(Issue("ERROR", None, "vsource_loop",
+                                f"電圧源だけでループ（短絡閉路）ができています: "
+                                f"ノード '{row[2]}' と '{row[3]}' の間"))`]],
+ wc:[['analysis_suite.py',48,`    for target in sorted(solver.node_map.keys(), key=nat_key):
+        max_s, min_s = {}, {}
+        # 感度解析による初期状態の決定
+        for n, d in comps.items():
+            if d['min'] == d['max']:
+                max_s[n] = min_s[n] = 'typ'
+            else:
+                tp = {k: v['typ'] for k, v in comps.items()}; tp[n] = d['max']
+                if solver.solve(tp)[target] > v_typ[target]:
+                    max_s[n], min_s[n] = 'max', 'min'
+                else:
+                    max_s[n], min_s[n] = 'min', 'max'`]],
+ check:[['solver_core.py',536,`        # --- 数値診断（結果は返すが、信頼性の目安を記録） ---
+        try:
+            cond = float(np.linalg.cond(A))
+        except Exception:
+            cond = float('inf')
+        znorm = float(np.linalg.norm(Z))
+        residual = float(np.linalg.norm(A @ res - Z) / (znorm + 1e-30))
+        self.last_diagnostics = {"cond": cond, "residual": residual, "dim": self.dim}`]]
+};
+function pyHL(line){
+  const s=esc(line);
+  const i=s.indexOf('#');
+  let code=i>=0?s.slice(0,i):s,cm=i>=0?`<span class="cm">${s.slice(i)}</span>`:'';
+  code=code.replace(/(f?&quot;[^&]*?&quot;|'[^']*')/g,'<span class="st">$1</span>').replace(/\b(def|for|in|return|if|elif|else|or|and|not|raise|from|try|except|as|continue|self)\b/g,'<span class="kw">$1</span>');
+  return code+cm;
+}
+function renderCode(key){
+  const c=CODE[key];
+  const files=[...new Set(c.map(x=>x[0]))];
+  $('codesub').textContent=files.map(f=>f+' 行 '+c.filter(x=>x[0]===f).map(([,s,t])=>s+'〜'+(s+t.split('\n').length-1)).join('、')).join(' / ');
+  let last='';
+  $('code').innerHTML='<pre class="code">'+c.map(([f,s,t],k)=>{const head=f!==last?`<span class="fn">${f}</span>`:(k?'<span class="sep">⋮</span>':'');last=f;
+    return head+t.split('\n').map((l,i)=>`<span class="ln"><i>${s+i}</i>${pyHL(l)}</span>`).join('')}).join('')+'</pre>';
+}
+
+/* ---------- プレイヤー ---------- */
+const FLAT=[];CH.forEach((c,ci)=>c.lines.forEach((l,li)=>FLAT.push([ci,li])));
+let cur=null,p=0,shownCh=-1,typing=null,auto=false,autoT=null,ttsOn=false,flapT=null,lastEmo={z:'n',m:'n'};
+const SPK={z:{name:'ずんだもん',col:'var(--zun)',el:'pZ',img:'iZ',pre:'z',pitch:1.6,rate:1.1},m:{name:'四国めたん',col:'var(--met)',el:'pM',img:'iM',pre:'m',pitch:1.1,rate:1.05}};
+['z','m'].forEach(s=>['n','joy','ang','sad','sur','swt'].forEach(e=>['','_o'].forEach(o=>{const i=new Image();i.src=`img/${s}_${e}${o}.webp`})));
+
+function vars(r){const P=r.P,cs=corners(),[l3,h3]=rangeOf(cs,'v3');
+  return {V:fmt(P.V),I:fmt(P.I),R1t:ohm(P.R1),G1:fmt(1/P.R1),d22:fmt(1/P.R1+1/P.R2+1/P.R3)+' mS',
+    v1:fmt(r.v['1']),v2:fmt(r.v['2']),v3:fmt(r.v['3']),i:fmt(r.i),iabs:fmt(Math.abs(r.i)),tol:fmt(P.tol),v3lo:fmt(l3),v3hi:fmt(h3)}}
+
+$('nav').innerHTML=CH.map((c,i)=>`<button data-c="${i}"><span class="n">${String(i+1).padStart(2,'0')}</span>${c.nav}</button>`).join('');
+$('nav').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;stopAuto();go(FLAT.findIndex(([ci])=>ci===+b.dataset.c))});
+
+function renderView(){
+  const c=CH[shownCh];
+  $('num').textContent=`CHAPTER ${String(shownCh+1).padStart(2,'0')} / ${CH.length}`;
+  $('ctitle').textContent=c.title;$('pyref').textContent=c.py;
+  $('view').innerHTML=(inErr?`<div class="warn">入力にエラーがあります:${esc(inErr)}(図は最後に正しく計算できた値で表示しています)</div>`:'')+c.view(R);
+  if(c.after)c.after();
+  renderCode(c.code);
+  [...$('nav').children].forEach((b,i)=>{if(i===shownCh)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});
+  const nb=$('nav').children[shownCh];if(nb)nb.scrollIntoView({block:'nearest',inline:'nearest'});
+}
+function highlight(keys){
+  const v=$('view');v.querySelectorAll('.lit,.litp').forEach(e=>e.classList.remove('lit','litp'));
+  if(!keys){v.classList.remove('focus');return}
+  const ks=keys.split(' ').filter(Boolean);let hit=0;
+  v.querySelectorAll('[data-k]').forEach(e=>{if(e.dataset.k.split(' ').some(k=>ks.includes(k))){e.classList.add('lit');hit++;
+    // 強調した要素を包む親(回路図・ネットリスト全体など)は暗くしない
+    for(let a=e.parentElement;a&&a!==v;a=a.parentElement)if(a.dataset&&a.dataset.k!==undefined&&!a.classList.contains('lit'))a.classList.add('litp')}});
+  v.classList.toggle('focus',hit>0);
+}
+function setFace(s,emo,open){const S=SPK[s];$(S.img).src=`img/${S.pre}_${emo}${open?'_o':''}.webp`;$(S.el).dataset.emo=emo}
+function flap(s,emo,on){
+  clearInterval(flapT);flapT=null;
+  ['z','m'].forEach(k=>{$(SPK[k].el).classList.toggle('on',on&&k===s);setFace(k,k===s?emo:lastEmo[k],false)});
+  if(on){let o=false;flapT=setInterval(()=>{o=!o&&Math.random()<.8;setFace(s,emo,o)},120)}
+}
+function lineText(l){return typeof l[2]==='function'?l[2](R,vars(R)):l[2]}
+
+/* 読み上げ用の読み替え(長い語から順に置き換える) */
+const YOMI=[['PyMNA Pro','パイ・エムエヌエー・プロ'],['np.linalg.solve','ナムパイのソルブ'],['parse_netlist_text','パース・ネットリスト・テキスト'],
+ ['A[n_pos, n_pos] += g','エーのエヌポス・エヌポスにジーを足す'],['A[n_pos, v_idx] += 1','エーのエヌポス・ブイインデックスに1を足す'],['A[v_idx, n_pos] += 1','エーのブイインデックス・エヌポスに1を足す'],['Z[n_neg] += val','ゼットのエヌネグに値を足す'],
+ ['i_Vin','アイ・ブイイン'],['Vin','ブイイン'],['Vx','ブイエックス'],['num_n','ナム・エヌ'],['num_v','ナム・ブイ'],['dim','ディム'],['JavaScript','ジャバスクリプト'],['Web','ウェブ'],
+ ['A x = Z','エー・エックス・イコール・ゼット'],['MNA','エムエヌエー'],['KCL','ケーシーエル'],['GND','グランド'],['SPICE','スパイス'],['solve','ソルブ'],['py','パイ'],
+ ['v₀','ブイゼロ'],['v₁','ブイワン'],['v₂','ブイツー'],['v₃','ブイスリー'],['+G1','プラス・ジーワン'],['−G1','マイナス・ジーワン'],['+G2','プラス・ジーツー'],['+I1','プラス・アイワン'],['G1','ジーワン'],['G2','ジーツー'],['G3','ジースリー'],
+ ['R1','アールワン'],['R2','アールツー'],['R3','アールスリー'],['I1','アイワン'],['+1','プラス1'],['−1','マイナス1'],['3×3','3かける3'],['4×4','4かける4'],['×','かける']];
+function yomi(t){
+  t=t.replace(/(\d)\s*mA/g,'$1ミリアンペア').replace(/(\d)\s*mS/g,'$1ミリジーメンス').replace(/(\d)\s*kΩ/g,'$1キロオーム').replace(/(\d)\s*Ω/g,'$1オーム').replace(/(\d)\s*V(?![a-zA-Z_])/g,'$1ボルト').replace(/(\d)\s*%/g,'$1パーセント').replace(/−(\d)/g,'マイナス$1');
+  YOMI.forEach(([a,b])=>{t=t.split(a).join(b)});return t.replace(/…/g,'、');
+}
+/* ---------- VOICEVOX(ローカルの 127.0.0.1:50021)。未接続ならブラウザ音声で代替 ---------- */
+const VV='http://127.0.0.1:50021';
+const EMOV={n:{pref:['ノーマル'],adj:{}},joy:{pref:['あまあま','ノーマル'],adj:{i:1.2,p:.02}},ang:{pref:['ツンツン','ノーマル'],adj:{i:1.3,s:1.05}},
+  sad:{pref:['なみだめ','ささやき','ノーマル'],adj:{s:.92,p:-.03,i:.8}},sur:{pref:['ノーマル'],adj:{p:.06,i:1.5}},swt:{pref:['ヘロヘロ','ノーマル'],adj:{s:1.12}}};
+const VVSPK={z:{name:'ずんだもん',speed:1.1,inton:1.1,st:{}},m:{name:'四国めたん',speed:1.05,inton:1.1,st:{}}};
+let vvOK=false,actx=null,an=null,src=null,raf=0;const vcache=new Map();
+function vvStatus(msg,ok){$('vvst').textContent=msg;$('lamp').classList.toggle('on',!!ok);$('credit').textContent=ok?'VOICEVOX:ずんだもん / VOICEVOX:四国めたん':''}
+// ローカルで開いているときだけ、その場の VOICEVOX に接続する(公開先からは接続できないため)
+// URL に ?pub を付けると、ローカルでも公開先と同じ動き(収録音声のみ)で確認できる
+const LOCAL=(location.protocol==='file:'||/^(127\.0\.0\.1|localhost)$/.test(location.hostname))&&!/[?&]pub\b/.test(location.search);
+/* ---------- 収録済み音声(voice/manifest.json)。tools/gen_voice.js で作る ---------- */
+let REC=null;
+const RECMSG='収録済みの VOICEVOX 音声(ずんだもん・四国めたん)で読み上げます。「読み上げ」を押してください。入力欄の値を変えた章の数値のセリフは、ブラウザ内蔵の音声になります。';
+async function loadRec(){
+  if(location.protocol==='file:')return;
+  try{const r=await fetch('voice/manifest.json',{cache:'no-cache'});if(!r.ok)return;REC=(await r.json()).lines;if(!vvOK)vvStatus(RECMSG,true);updTts()}catch(e){}
+}
+// 今のセリフに対応する収録音声(読み上げる文が収録時と同じときだけ使う)
+function recFor(idx,text){const f=FLAT[idx];if(!REC||!f)return null;const e=REC[f[0]+'-'+f[1]];return e&&e.t===yomi(text)?e:null}
+function recAudio(file){
+  const key='rec|'+file;
+  if(!vcache.has(key)){const pr=fetch('voice/'+file).then(r=>{if(!r.ok)throw new Error('voice '+r.status);return r.arrayBuffer()}).then(b=>actx.decodeAudioData(b));
+    pr.catch(()=>vcache.delete(key));vcache.set(key,pr);if(vcache.size>60)vcache.delete(vcache.keys().next().value)}
+  return vcache.get(key);
+}
+async function connectVV(quiet){
+  try{
+    const ac=new AbortController(),t=setTimeout(()=>ac.abort(),2500);
+    const r=await fetch(VV+'/speakers',{signal:ac.signal});clearTimeout(t);if(!r.ok)throw new Error(r.status);
+    const list=await r.json();
+    for(const k in VVSPK){const sp=list.find(x=>x.name===VVSPK[k].name);if(!sp)throw new Error(VVSPK[k].name+' が見つかりません');
+      for(const e in EMOV)VVSPK[k].st[e]=(EMOV[e].pref.map(p=>sp.styles.find(s=>s.name===p)).find(Boolean)||sp.styles[0]).id}
+    vvOK=true;vvStatus('VOICEVOX に接続しました。「読み上げ」をオンにすると、ずんだもん・四国めたんの声で再生します。',true);updTts();
+  }catch(e){
+    vvOK=false;if(quiet)return;
+    if(REC){vvStatus(RECMSG,true);updTts();return}
+    vvStatus(location.protocol==='file:'
+      ?'VOICEVOX 未接続:ファイルを直接開いていると通信できません。このフォルダの「起動.bat」から開いてください(今はブラウザ内蔵の音声で読み上げます)。'
+      :'VOICEVOX 未接続:VOICEVOX を起動して「再接続」を押してください(今はブラウザ内蔵の音声で読み上げます)。',false);updTts();
+  }
+}
+function vvAudio(text,s,emo){
+  const a=EMOV[emo].adj,S=VVSPK[s],id=S.st[emo]??S.st.n;
+  const q={speedScale:S.speed*(a.s||1),pitchScale:a.p||0,intonationScale:S.inton*(a.i||1),prePhonemeLength:.05,postPhonemeLength:.12};
+  const key=id+'|'+text;
+  if(!vcache.has(key)){
+    const pr=(async()=>{
+      const r1=await fetch(`${VV}/audio_query?text=${encodeURIComponent(text)}&speaker=${id}`,{method:'POST'});if(!r1.ok)throw new Error('audio_query '+r1.status);
+      const aq=Object.assign(await r1.json(),q);
+      const r2=await fetch(`${VV}/synthesis?speaker=${id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(aq)});if(!r2.ok)throw new Error('synthesis '+r2.status);
+      return actx.decodeAudioData(await r2.arrayBuffer());
+    })();
+    pr.catch(()=>vcache.delete(key));vcache.set(key,pr);if(vcache.size>60)vcache.delete(vcache.keys().next().value);
+  }
+  return vcache.get(key);
+}
+function stopAudio(){cancelAnimationFrame(raf);if(src){src.onended=null;try{src.stop()}catch(e){}src=null}}
+function playBuf(buf,s,emo,done){
+  stopAudio();clearInterval(flapT);flapT=null;
+  src=actx.createBufferSource();src.buffer=buf;src.connect(an);
+  src.onended=()=>{cancelAnimationFrame(raf);src=null;done()};src.start();
+  // 音量(RMS)で口を開閉。ヒステリシスでパタつきを抑える
+  const data=new Float32Array(an.fftSize);let open=false,last=0;
+  const loop=t=>{an.getFloatTimeDomainData(data);let sum=0;for(const v of data)sum+=v*v;const rms=Math.sqrt(sum/data.length),want=open?rms>.018:rms>.04;
+    if(want!==open&&t-last>55){open=want;last=t;setFace(s,emo,open)}raf=requestAnimationFrame(loop)};
+  raf=requestAnimationFrame(loop);
+}
+function prefetch(){if(!ttsOn||!actx)return;for(let k=1;k<=2;k++){const f=FLAT[p+k];if(!f)break;const l=CH[f[0]].lines[f[1]],t=lineText(l),rec=recFor(p+k,t);
+  if(rec)recAudio(rec.f).catch(()=>{});else if(vvOK)vvAudio(yomi(t),l[0],l[1])}}
+function updTts(){$('tts').textContent=(ttsOn?'🔊 ':'🔈 ')+(vvOK||REC?'VOICEVOX':'読み上げ')+(ttsOn?' オン':' オフ')}
+
+let spkTok=0;
+// 読み上げの優先順:収録済み音声 → その場の VOICEVOX → ブラウザ内蔵の音声
+function speak(text,s,done,emo,noRec){
+  const my=++spkTok;
+  const rec=!noRec&&ttsOn&&actx?recFor(p,text):null;
+  if(rec){
+    recAudio(rec.f).then(buf=>{if(my!==spkTok)return;playBuf(buf,s,emo,()=>{if(my===spkTok)done()});prefetch()})
+      .catch(e=>{console.warn(e);if(my!==spkTok)return;speak(text,s,done,emo,true)});
+    return;
+  }
+  if(ttsOn&&vvOK&&actx){
+    vvAudio(yomi(text),s,emo).then(buf=>{if(my!==spkTok)return;playBuf(buf,s,emo,()=>{if(my===spkTok)done()});prefetch()})
+      .catch(e=>{console.warn(e);if(my!==spkTok)return;vvOK=false;vvStatus('VOICEVOX で音声を作れませんでした。VOICEVOX が起動しているか確認して「再接続」を押してください(ブラウザ音声で代替中)。',false);updTts();speak(text,s,done,emo)});
+    return;
+  }
+  try{
+    if(!ttsOn||!window.speechSynthesis){done();return}
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(yomi(text));u.lang='ja-JP';u.pitch=SPK[s].pitch;u.rate=SPK[s].rate;
+    const v=speechSynthesis.getVoices().find(v=>/^ja/i.test(v.lang));if(v)u.voice=v;
+    let fired=false;const fin=()=>{if(!fired){fired=true;clearTimeout(g);done()}};
+    u.onend=fin;u.onerror=fin;const g=setTimeout(fin,2500+text.length*220);
+    speechSynthesis.speak(u);
+  }catch(e){done()}
+}
+function go(np){
+  p=Math.max(0,Math.min(FLAT.length-1,np));
+  const [ci,li]=FLAT[p];
+  if(ci!==shownCh){shownCh=ci;if(ci!==10)EXP='ok';renderView()}
+  const l=CH[ci].lines[li],s=l[0],emo=l[1],text=lineText(l);
+  highlight(l[3]||'');
+  const S=SPK[s];
+  $('bubble').style.setProperty('--sc',S.col);$('who').textContent=S.name;
+  $('cnt').textContent=`${li+1}/${CH[ci].lines.length}`;
+  $('pos').textContent=`${p+1} / ${FLAT.length}`;
+  lastEmo[s]=emo;
+  clearInterval(typing);typing=null;clearTimeout(autoT);spkTok++;stopAudio();try{speechSynthesis.cancel()}catch(e){}
+  const tx=$('tx');tx.textContent='';
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 1セリフの状態:文字送りと読み上げの両方が終わったら口を閉じ、自動再生なら次へ
+  const st={s,emo,text,typed:false,spoke:!ttsOn,done:false};
+  st.finish=()=>{if(st!==cur||st.done||!st.typed||!st.spoke)return;st.done=true;flap(s,emo,false);
+    if(auto)autoT=setTimeout(()=>{if(p<FLAT.length-1)go(p+1);else stopAuto()},900+st.text.length*25)};
+  cur=st;
+  flap(s,emo,true);
+  speak(text,s,()=>{st.spoke=true;st.finish()},emo);
+  if(reduce){tx.textContent=text;st.typed=true;st.finish();return}
+  let i=0;
+  typing=setInterval(()=>{i+=2;tx.textContent=st.text.slice(0,i);if(i>=st.text.length){clearInterval(typing);typing=null;st.typed=true;st.finish()}},32);
+}
+function next(){
+  if(typing&&cur){clearInterval(typing);typing=null;$('tx').textContent=cur.text;cur.typed=true;cur.finish();return}
+  if(p<FLAT.length-1)go(p+1);
+}
+function stopAuto(){auto=false;clearTimeout(autoT);$('auto').textContent='▶ 自動再生'}
+function toggleAuto(){if(auto){stopAuto();return}auto=true;$('auto').textContent='❚❚ 一時停止';if(p>=FLAT.length-1)go(0);else go(p+1)}
+$('next').onclick=()=>{stopAuto();next()};
+$('prev').onclick=()=>{stopAuto();go(p-1)};
+$('auto').onclick=toggleAuto;
+$('bubble').onclick=()=>{stopAuto();next()};
+$('tts').onclick=()=>{
+  ttsOn=!ttsOn;$('tts').setAttribute('aria-pressed',ttsOn);updTts();
+  // 音声はユーザー操作の後でないと鳴らせないので、ここで AudioContext を作る
+  if(ttsOn&&!actx){const AC=window.AudioContext||window.webkitAudioContext;actx=new AC();an=actx.createAnalyser();an.fftSize=1024;an.connect(actx.destination)}
+  if(actx)actx.resume();
+  if(!ttsOn){spkTok++;stopAudio();try{speechSynthesis.cancel()}catch(e){}if(cur){cur.spoke=true;cur.finish()}}else go(p)};
+$('vvre').onclick=()=>connectVV();
+document.addEventListener('keydown',e=>{if(e.target.matches('input,textarea'))return;if(e.key==='ArrowRight'){stopAuto();next()}if(e.key==='ArrowLeft'){stopAuto();go(p-1)}if(e.code==='Space'&&!e.target.matches('button')){e.preventDefault();toggleAuto()}});
+
+/* ---------- 入力変更で再計算 ---------- */
+let deb;
+function recalc(){
+  try{R=compute(readIn());inErr=''}catch(e){inErr=e.message}
+  $('ferr').textContent=inErr;
+  const keep=FLAT[p];renderView();const l=CH[keep[0]].lines[keep[1]];highlight(l[3]||'');
+  if(typeof l[2]==='function'&&cur){cur.text=lineText(l);if(!typing)$('tx').textContent=cur.text}
+}
+$('inputs').addEventListener('input',()=>{clearTimeout(deb);deb=setTimeout(recalc,250)});
+$('reset').onclick=()=>{FIELDS.forEach(([k])=>$('in-'+k).value=DEF[k]);recalc()};
+$('iflip').onclick=()=>{const el=$('in-I');el.value=String(-(Number(el.value)||0));recalc()};
+$('rnd').onclick=()=>{['R1','R2','R3'].forEach(k=>{$('in-'+k).value=String(Math.round((0.2+Math.random()*4.8)*10)/10)});recalc()};
+
+/* ---------- 用語集 ---------- */
+// [用語, 補足, 説明, 登場する章の番号(0始まり)]
+const GLOSS=[
+ ['MNA','Modified Nodal Analysis(修正節点解析)','ノード電圧に加えて、電圧源などの電流も未知数にして連立方程式を立てる方法。どんな回路でも同じ手順で式が作れるので、SPICE などの回路シミュレータの標準になっている。',[0,3]],
+ ['PyMNA Pro','','この回路計算プログラム。Python 版(solver_core.py ほか)と、ブラウザで動く Web 版がある。MNA で直流の動作点を求め、ワーストケース解析やモンテカルロ解析もできる。',[0,11]],
+ ['ノード','節点','部品と部品が電線でつながっている点。電線でつながっていれば、どこでも同じノード(同じ電圧)。',[1,2]],
+ ['GND','グランド・ノード 0','電圧の基準(0 V)にするノード。PyMNA Pro ではノード名 0。未知数には入れず、行列にも行・列を作らない。',[1,5,10]],
+ ['ネットリスト','','回路を「1部品1行」のテキストで表したもの。PyMNA Pro では <code>種別 名前 N+ N- 値 [許容差]</code> の順に書く。',[1,11]],
+ ['N+ / N−','プラス側 / マイナス側のノード','部品の2つの端子がつながるノード。電圧源なら + 端子と − 端子、電流源なら「中を N+ から N− へ流れる」向きを表す。',[1,6,7]],
+ ['KCL','キルヒホッフの電流則','あるノードから出ていく電流の合計は、そのノードに押し込まれた電流と等しい(電流はノードで消えたり湧いたりしない)。',[2,6,9]],
+ ['オームの法則','','抵抗を流れる電流 = 両端の電圧の差 ÷ 抵抗。I = V / R。',[2]],
+ ['ノード解析','節点解析','ノード電圧だけを未知数にして、各ノードの KCL で式を立てる方法。電圧源があると、その電流が式に残って困る。',[2]],
+ ['コンダクタンス','G = 1/R、単位 S(ジーメンス)','抵抗の逆数。電流の流れやすさ。1 kΩ なら 1 mS。MNA の行列には抵抗ではなくコンダクタンスを入れる。',[4,5]],
+ ['スタンプ','','部品の種類とつながっているノード番号だけを見て、行列 A や右辺 Z の決まったマスに値を足し込むこと。全部の部品をスタンプすると連立方程式が完成する。',[0,4,5,6,7]],
+ ['係数行列 A','','連立方程式の左辺の係数を並べた正方行列。大きさは「ノードの数 + 電圧源の数」。',[0,3,8]],
+ ['未知数ベクトル x','','求めたい値の並び。PyMNA Pro では、ノード電圧(ノード名の順)のあとに電圧源の電流が続く。',[0,3,9]],
+ ['右辺ベクトル Z','','連立方程式の右辺。電流源の電流と、電圧源の電圧が入る。PDF 資料などでは b と書くこともある。',[0,6,7]],
+ ['G・B・C・D ブロック','','MNA の行列の4つの区画。G はコンダクタンス、B と C は電圧源のつながり(±1)、D は従属電源などで使う部分。',[3,7]],
+ ['対角成分','','行番号と列番号が同じマス。抵抗だけの回路では「そのノードにつながる抵抗のコンダクタンスの合計」になる。',[5]],
+ ['電圧源','V','両端の電圧が決まっている電源。流れる電流は回路しだいなので、MNA では電流を未知数に追加する。',[2,7]],
+ ['電流源','I','流れる電流が決まっている電源。未知数を増やさず、右辺 Z に電流を足すだけでスタンプできる。',[6]],
+ ['i_Vin の向き','','電圧源の電流は「+ 端子から電源の中へ流れ込む向き」を正にする(SPICE と同じ)。電源が電流を送り出しているとマイナスになる。',[7,9]],
+ ['ガウスの消去法','','連立方程式を、式どうしを引き算して未知数を1つずつ消して解く方法。高校の連立方程式の解き方を機械的にしたもの。',[9]],
+ ['np.linalg.solve','NumPy','Python の NumPy にある、連立一次方程式 A x = Z を解く関数。Python 版 PyMNA Pro はこれを使う。',[0,9]],
+ ['行列式','det A','正方行列から計算される1つの数。0 だと逆行列が作れず、連立方程式の答えが1つに決まらない。',[10]],
+ ['特異行列','','行列式が 0 の行列。MNA では、GND がない・どこにもつながらないノードがある・電圧源どうしが矛盾している、などの設計ミスを意味する。',[10]],
+ ['浮遊ノード','floating node','GND まで抵抗や電圧源の経路がないノード。電流源だけがつながったノードもこれにあたる。',[10]],
+ ['電圧源ループ','vsource loop','電圧源だけでできた閉じた輪。電圧が矛盾するか、電流が決まらなくなる。',[10]],
+ ['許容差','トレランス','部品の値のばらつきの範囲。±5 % の 1 kΩ なら 0.95〜1.05 kΩ。ネットリストの値のあとに書く。',[11]],
+ ['ワーストケース解析','WCA','部品のばらつきを考えて、電圧が最大・最小になる組み合わせを探す解析。PyMNA Pro は感度で向きを決め、反復で詰める。',[11]],
+ ['感度','','ある部品の値を少し変えたときに、電圧がどれだけ・どちら向きに変わるか。トルネードチャートで表示できる。',[11]],
+ ['モンテカルロ解析','','部品の値を乱数でばらつかせて何百回も解き、電圧の分布を調べる解析。',[11]],
+ ['残差 / 条件数','','解の確かさの目安。残差は A x と Z のずれ、条件数は誤差の増えやすさ。PyMNA Pro は解いたあとに両方を記録する。',[12]],
+ ['SPICE','','代表的な回路シミュレータ。中で MNA を使っている。ネットリストの書き方や電流の向きの決まりは、PyMNA Pro もこれに合わせている。',[7]]
+];
+function renderGloss(){
+  const q=$('gq').value.trim().toLowerCase();
+  const hit=GLOSS.filter(([t,s,d])=>!q||(t+' '+s+' '+d).toLowerCase().includes(q));
+  $('gcount').textContent=`${hit.length} / ${GLOSS.length} 語`;
+  $('glist').innerHTML=hit.length?hit.map(([t,s,d,cs])=>`<dl class="gl"><dt>${esc(t)}${s?`<small>${esc(s)}</small>`:''}</dt><dd>${d}</dd>${cs.length?`<div class="chs">`+cs.map(c=>`<button data-c="${c}">${String(c+1).padStart(2,'0')} ${CH[c].nav}</button>`).join('')+`</div>`:''}</dl>`).join('')
+    :'<p class="glempty">見つかりませんでした。別の言葉で検索してください。</p>';
+}
+$('gq').addEventListener('input',renderGloss);
+$('glist').addEventListener('click',e=>{const b=e.target.closest('button[data-c]');if(!b)return;stopAuto();go(FLAT.findIndex(([ci])=>ci===+b.dataset.c));document.querySelector('.stage').scrollIntoView({behavior:'smooth',block:'start'})});
+$('toGloss').onclick=()=>$('gloss').scrollIntoView({behavior:'smooth',block:'start'});
+renderGloss();
+
+// tools/gen_voice.js から読み込まれたときは、読み上げる文の一覧を渡して終わる(初期値で計算した文)
+if(window.__EXPORT_VOICE){window.__EXPORT_VOICE({lines:FLAT.map(([ci,li])=>{const l=CH[ci].lines[li];return {id:ci+'-'+li,s:l[0],emo:l[1],t:yomi(lineText(l))}}),EMOV,VVSPK});return}
+
+go(0);
+loadRec();
+if(LOCAL){
+  connectVV();
+  // VOICEVOX の起動待ち:未接続なら5秒ごとに静かに再接続を試す
+  if(location.protocol!=='file:')setInterval(()=>{if(!vvOK)connectVV(true)},5000);
+}else{$('vvre').hidden=true;vvStatus('音声を読み込んでいます…',false)}
+})();
+</script>
